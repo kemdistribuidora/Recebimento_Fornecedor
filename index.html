@@ -74,6 +74,18 @@
       cursor: pointer;
     }
     .btn-salvar:hover { background: #176f3d; }
+    .btn-atualizar {
+      padding: 13px 18px;
+      border: 0;
+      border-radius: 8px;
+      color: #fff;
+      background: var(--azul);
+      box-shadow: inset 0 -2px 0 rgba(0,0,0,.14);
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .btn-atualizar:hover { background: var(--azul-escuro); }
     .status { color: var(--verde); font-size: 14px; font-weight: 700; white-space: nowrap; }
 
     .abas { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 14px 0; }
@@ -163,6 +175,7 @@
           <input id="dataLancamento" type="date">
         </label>
         <button class="btn-salvar" id="salvar" type="button">Salvar na planilha</button>
+        <button class="btn-atualizar" id="atualizar" type="button">Atualizar</button>
         <span class="status" id="status">Nada lançado ainda neste setor/dia</span>
       </div>
     </header>
@@ -199,7 +212,7 @@
   </main>
   <script>
     // URL da implantação do Apps Script que recebe os lançamentos do GitHub Pages.
-    const URL_APPS_SCRIPT = 'https://script.google.com/macros/s/AKfycbzEOI4wKUnH9Q7yWk_FMbfi1AErEjVcp5tXY_cM2212ZkKxV38mNR2yrd5pd85vo4GQYQ/exec';
+    const URL_APPS_SCRIPT = 'https://script.google.com/macros/s/AKfycby6gLyPEKaLsE-Y6Msk_292xx4hLfElV9dxRlcEa6QSFoKE5O8omx1dTvu-YedTHvsUOQ/exec';
     const linhas = document.getElementById('linhas');
     const dataLancamento = document.getElementById('dataLancamento');
     const status = document.getElementById('status');
@@ -210,7 +223,7 @@
     const campo = (tipo, placeholder = '', extra = '') =>
       `<td class="celula"><input type="${tipo}" placeholder="${placeholder}" ${extra}></td>`;
 
-    for (let numero = 1; numero <= 5; numero++) {
+    function adicionarLinha() {
       linhas.insertAdjacentHTML('beforeend', `
         <tr>
           ${campo('text', 'Fornecedor')}
@@ -235,6 +248,8 @@
           ${campo('time')}
         </tr>`);
     }
+
+    for (let numero = 1; numero <= 10; numero++) adicionarLinha();
 
     document.querySelectorAll('.aba').forEach(aba => {
       aba.addEventListener('click', () => {
@@ -284,6 +299,63 @@
       });
     }
 
+    function preencherLancamentos(lancamentos) {
+      while (linhas.rows.length < Math.max(10, lancamentos.length)) adicionarLinha();
+
+      [...linhas.rows].forEach((linha, indice) => {
+        const campos = linha.querySelectorAll('input, select');
+        campos.forEach(campo => { campo.value = ''; });
+
+        const lancamento = lancamentos[indice];
+        if (!lancamento) return;
+
+        const valores = [
+          lancamento.fornecedor, lancamento.nfe, lancamento.lote,
+          lancamento.validade, lancamento.produtoMaster, lancamento.quantidadeDaNota,
+          lancamento.unidadeDeMedida, lancamento.temperatura, lancamento.fabricacao,
+          lancamento.conferente, lancamento.horaChegada, lancamento.horaSaida
+        ];
+        campos.forEach((campo, campoIndice) => {
+          campo.value = valores[campoIndice] ?? '';
+        });
+      });
+    }
+
+    function buscarLancamentosPorData() {
+      if (!dataLancamento.value) {
+        status.textContent = 'Informe a data para atualizar.';
+        dataLancamento.focus();
+        return;
+      }
+
+      const nomeCallback = `retornoRecebimentos${Date.now()}`;
+      const script = document.createElement('script');
+      status.textContent = 'Buscando lançamentos na planilha...';
+
+      window[nomeCallback] = resposta => {
+        script.remove();
+        delete window[nomeCallback];
+        if (!resposta.sucesso) {
+          status.textContent = resposta.mensagem || 'Não foi possível buscar os lançamentos.';
+          return;
+        }
+
+        const lancamentos = resposta.lancamentos || [];
+        preencherLancamentos(lancamentos);
+        status.textContent = lancamentos.length
+          ? `${lancamentos.length} lançamento(s) carregado(s) para esta data.`
+          : 'Nenhum lançamento encontrado para esta data.';
+      };
+
+      script.onerror = () => {
+        script.remove();
+        delete window[nomeCallback];
+        status.textContent = 'Não foi possível consultar a planilha.';
+      };
+      script.src = `${URL_APPS_SCRIPT}?acao=listarRecebimentos&data=${encodeURIComponent(dataLancamento.value)}&callback=${nomeCallback}`;
+      document.head.appendChild(script);
+    }
+
     document.getElementById('salvar').addEventListener('click', async () => {
       const lancamentos = obterLancamentos();
       const setor = document.querySelector('.aba.ativa')?.textContent || 'Recebimento';
@@ -320,6 +392,8 @@
         status.textContent = `Falha ao enviar: ${erro.message || erro}`;
       }
     });
+
+    document.getElementById('atualizar').addEventListener('click', buscarLancamentosPorData);
   </script>
 </body>
 </html>
