@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Recebimento de Fornecedor</title>
+  <style>
+    :root {
+      --azul: #143f73;
+      --azul-escuro: #0e3563;
+      --azul-claro: #eaf1fa;
+      --verde: #218a4d;
+      --laranja: #f7941d;
+      --vermelho: #e83b32;
+      --borda: #c7d1df;
+      --texto: #173f71;
+      --fundo: #f3f6fa;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-width: 320px;
+      font-family: Arial, Helvetica, sans-serif;
+      color: #263746;
+      background: linear-gradient(180deg, #f8fafc 0, var(--fundo) 100%);
+    }
+
+    .pagina { padding: 8px 20px; }
+
+    .cabecalho {
+      min-height: 88px;
+      display: flex;
+      align-items: center;
+      gap: 28px;
+      padding: 14px 18px;
+      border: 1px solid #d7dde6;
+      border-top: 4px solid var(--vermelho);
+      border-bottom: 3px solid var(--laranja);
+      background: #fff;
+      box-shadow: 0 2px 6px rgba(20, 63, 115, .08);
+    }
+
+    .marca { display: flex; align-items: center; gap: 15px; min-width: 390px; }
+    .logo {
+      width: 108px;
+      color: var(--azul);
+      font-size: 40px;
+      font-weight: 800;
+      font-style: italic;
+      letter-spacing: -4px;
+      line-height: .75;
+    }
+    .logo small {
+      display: block;
+      margin: 0 0 7px 1px;
+      color: #2876aa;
+      font-size: 6px;
+      font-style: normal;
+      letter-spacing: .4px;
+      white-space: nowrap;
+    }
+    .logo span { color: var(--vermelho); }
+    .titulo h1 { margin: 0; color: var(--azul); font-size: 22px; }
+    .titulo p { margin: 1px 0 0; color: #596575; font-size: 13px; font-weight: 600; }
+
+    .acoes { display: flex; align-items: center; gap: 17px; margin-left: auto; }
+    .campo-data { display: flex; align-items: center; gap: 8px; color: var(--azul); font-weight: 700; }
+    input, select { font: inherit; }
+    .campo-data input {
+      width: 173px;
+      padding: 10px 11px;
+      border: 2px solid var(--borda);
+      border-radius: 8px;
+      color: #202020;
+      font-size: 16px;
+      outline: none;
+    }
+    .campo-data input:focus, .celula input:focus, .celula select:focus { border-color: #5b93cf; box-shadow: 0 0 0 2px rgba(91,147,207,.12); }
+    .btn-salvar {
+      min-width: 205px;
+      padding: 13px 20px;
+      border: 0;
+      border-radius: 8px;
+      color: #fff;
+      background: var(--verde);
+      box-shadow: inset 0 -2px 0 rgba(0,0,0,.14);
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .btn-salvar:hover { background: #176f3d; }
+    .status { color: var(--verde); font-size: 14px; font-weight: 700; white-space: nowrap; }
+
+    .abas { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 14px 0; }
+    .aba {
+      padding: 15px 10px;
+      border: 2px solid var(--borda);
+      border-radius: 10px;
+      background: #fff;
+      color: #596575;
+      font-size: 18px;
+      font-weight: 700;
+      text-align: center;
+      box-shadow: 0 2px 3px rgba(20,63,115,.08);
+      cursor: pointer;
+    }
+    .aba.ativa { border-color: var(--azul); color: var(--azul); background: #eaf5ed; box-shadow: inset 0 -3px var(--laranja), 0 2px 3px rgba(20,63,115,.08); }
+
+    .grade { overflow: auto; max-height: calc(100vh - 194px); border: 1px solid var(--borda); border-radius: 10px; background: #fff; box-shadow: 0 1px 4px rgba(20,63,115,.08); }
+    table { width: 100%; min-width: 1820px; border-collapse: collapse; table-layout: fixed; }
+    thead th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      padding: 12px 8px;
+      border-right: 1px solid #5b7697;
+      background: var(--azul);
+      color: #fff;
+      font-size: 13px;
+      line-height: 15px;
+      text-align: center;
+      text-transform: uppercase;
+    }
+    thead th:first-child { background: #e9f0f9; color: var(--azul); }
+    tbody td { height: 52px; padding: 5px; border: 1px solid #d8e0ea; background: #fff; }
+    tbody tr:nth-child(even) td { background: #f8fafc; }
+    tbody td:first-child { padding: 0; background: #eef4fc; color: var(--azul); font-size: 18px; font-weight: 700; text-align: center; }
+    .celula input, .celula select {
+      width: 100%;
+      height: 35px;
+      padding: 6px 8px;
+      border: 1px solid transparent;
+      border-radius: 5px;
+      background: transparent;
+      color: #303d4b;
+      outline: none;
+    }
+    .celula input::placeholder { color: #9caaba; }
+    .celula input[type="time"] { text-align: center; color: #52667c; }
+    .celula input[type="number"] { text-align: right; }
+    .celula select { cursor: pointer; }
+
+    .col-n { width: 56px; } .col-data { width: 105px; } .col-forn { width: 190px; }
+    .col-nfe { width: 105px; } .col-lote { width: 120px; } .col-validade { width: 110px; }
+    .col-produto { width: 245px; } .col-quantidade { width: 135px; } .col-unidade { width: 135px; }
+    .col-temperatura { width: 110px; } .col-fabricacao { width: 110px; } .col-conferente { width: 175px; }
+    .col-hora { width: 110px; }
+
+    @media (max-width: 1050px) {
+      .cabecalho { flex-wrap: wrap; gap: 12px; }
+      .marca { min-width: 0; }
+      .acoes { width: 100%; margin-left: 0; flex-wrap: wrap; }
+      .status { white-space: normal; }
+    }
+    @media (max-width: 620px) {
+      .pagina { padding: 6px; }
+      .marca { gap: 7px; }
+      .logo { width: 85px; font-size: 32px; }
+      .titulo h1 { font-size: 17px; }
+      .acoes { gap: 8px; }
+      .campo-data input { width: 155px; }
+      .btn-salvar { min-width: 0; }
+      .abas { grid-template-columns: repeat(2, 1fr); gap: 6px; }
+      .aba { padding: 11px 6px; font-size: 15px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="pagina">
+    <header class="cabecalho">
+      <div class="marca">
+        <div class="logo"><small>DISTRIBUIDORA DE ALIMENTOS</small>K<span>e</span>m</div>
+        <div class="titulo">
+          <h1>Recebimento de Fornecedor</h1>
+          <p>Controle de recebimento</p>
+        </div>
+      </div>
+      <div class="acoes">
+        <label class="campo-data" for="dataLancamento">Data:
+          <input id="dataLancamento" type="date">
+        </label>
+        <button class="btn-salvar" id="salvar" type="button">Salvar na planilha</button>
+        <span class="status" id="status">Nada lançado ainda neste setor/dia</span>
+      </div>
+    </header>
+
+    <nav class="abas" aria-label="Setores de recebimento">
+      <button class="aba ativa" type="button">Secos 1</button>
+      <button class="aba" type="button">Secos 2</button>
+      <button class="aba" type="button">Resfriados</button>
+      <button class="aba" type="button">Congelados</button>
+    </nav>
+
+    <section class="grade" aria-label="Lançamentos de recebimento">
+      <table>
+        <thead>
+          <tr>
+            <th class="col-n">#</th>
+            <th class="col-data">Data</th>
+            <th class="col-forn">Fornecedor</th>
+            <th class="col-nfe">NFE</th>
+            <th class="col-lote">Lote</th>
+            <th class="col-validade">Validade</th>
+            <th class="col-produto">Produto Master</th>
+            <th class="col-quantidade">Quantidade da Nota</th>
+            <th class="col-unidade">Unidade de Medida</th>
+            <th class="col-temperatura">Temperatura</th>
+            <th class="col-fabricacao">Fabricação</th>
+            <th class="col-conferente">Conferente.</th>
+            <th class="col-hora">H de Chega</th>
+            <th class="col-hora">H de Saida</th>
+          </tr>
+        </thead>
+        <tbody id="linhas"></tbody>
+      </table>
+    </section>
+  </main>
+
+  <script>
+    const linhas = document.getElementById('linhas');
+    const dataLancamento = document.getElementById('dataLancamento');
+    const status = document.getElementById('status');
+
+    const hoje = new Date();
+    dataLancamento.value = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-${String(hoje.getDate()).padStart(2, '0')}`;
+
+    const campo = (tipo, placeholder = '', extra = '') =>
+      `<td class="celula"><input type="${tipo}" placeholder="${placeholder}" ${extra}></td>`;
+
+    for (let numero = 1; numero <= 20; numero++) {
+      linhas.insertAdjacentHTML('beforeend', `
+        <tr>
+          <td>${numero}</td>
+          ${campo('date')}
+          ${campo('text', 'Fornecedor')}
+          ${campo('text', 'NFE')}
+          ${campo('text', 'Lote')}
+          ${campo('date')}
+          ${campo('text', 'Produto master')}
+          ${campo('number', '0', 'min="0" step="any"')}
+          <td class="celula"><select aria-label="Unidade de medida"><option value=""></option><option>UN</option><option>KG</option><option>CX</option><option>PC</option><option>LT</option></select></td>
+          ${campo('text', 'Ex.: 5 °C')}
+          ${campo('date')}
+          ${campo('text', 'Conferente')}
+          ${campo('time')}
+          ${campo('time')}
+        </tr>`);
+    }
+
+    document.querySelectorAll('.aba').forEach(aba => {
+      aba.addEventListener('click', () => {
+        document.querySelector('.aba.ativa').classList.remove('ativa');
+        aba.classList.add('ativa');
+        status.textContent = `Nada lançado ainda em ${aba.textContent} neste dia`;
+      });
+    });
+
+    document.getElementById('salvar').addEventListener('click', () => {
+      status.textContent = 'Integração com a planilha será conectada no Apps Script.';
+    });
+  </script>
+</body>
+</html>
