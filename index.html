@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Grid de Operação</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" type="image/png" href="imagens/icone.png">
+<link rel="apple-touch-icon" href="imagens/icone.png">
+<style>
+  :root {
+    /* Cores da marca KEM */
+    --azul: #123a6b;         /* azul-marinho da logo */
+    --azul-escuro: #0e2e56;
+    --azul-clarinho: #eaf1fb;
+    --laranja: #f7941d;      /* laranja da logo */
+    --vermelho: #e5341f;     /* vermelho da logo */
+    --grad: linear-gradient(135deg, #f7a81b, #e5341f);
+
+    --fundo: #eef1f6;
+    --texto: #1f2733;
+    --texto-suave: #5b6675;
+    --borda: #c7cfdb;
+    --borda-forte: var(--azul);
+    --ok: #1f8a4c;
+    --ok-escuro: #176c3b;
+    --erro: #c5221f;
+    --aviso-bg: #fdecea;
+  }
+
+  * { box-sizing: border-box; }
+
+  html { background: var(--fundo); }
+
+  body {
+    margin: 0 auto;
+    max-width: min(1500px, 97vw);
+    padding: 16px;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 16px;
+    color: var(--texto);
+  }
+
+  /* ---------- Aviso de preview ---------- */
+  #banner {
+    background: #fff4e0;
+    border: 1px solid var(--laranja);
+    color: #8a5300;
+    padding: 10px 16px;
+    border-radius: 10px;
+    margin-bottom: 12px;
+    font-size: 14px;
+    font-weight: bold;
+  }
+
+  /* ---------- Barra do topo ---------- */
+  .topo {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    flex-wrap: wrap;
+    background: #fff;
+    border: 1px solid var(--borda);
+    border-top: 5px solid transparent;
+    border-image: var(--grad) 1;
+    border-radius: 12px;
+    padding: 14px 20px;
+    margin-bottom: 14px;
+    box-shadow: 0 2px 8px rgba(18, 58, 107, .08);
+    position: sticky;
+    top: 0;
+    z-index: 20;
+  }
+
+  .logo { height: 54px; width: auto; display: block; }
+
+  .titulo { margin-right: auto; line-height: 1.15; }
+  .titulo h1 {
+    margin: 0;
+    font-size: 22px;
+    font-weight: bold;
+    color: var(--azul);
+  }
+  .titulo .sub { font-size: 13px; color: var(--texto-suave); font-weight: bold; }
+
+  .campo-data { display: flex; align-items: center; gap: 8px; }
+  .campo-data label { font-weight: bold; color: var(--azul); }
+  .campo-data input {
+    font-size: 18px;
+    padding: 10px;
+    border: 2px solid var(--borda);
+    border-radius: 8px;
+    font-family: inherit;
+  }
+  .campo-data input:focus { outline: none; border-color: var(--azul); }
+
+  button {
+    font-family: inherit;
+    font-size: 17px;
+    font-weight: bold;
+    padding: 13px 30px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+
+  #salvar { background: var(--ok); color: #fff; box-shadow: 0 2px 0 var(--ok-escuro); }
+  #salvar:hover { background: var(--ok-escuro); }
+  #salvar:active { transform: translateY(1px); box-shadow: none; }
+  #salvar:disabled { background: #a9b2c0; box-shadow: none; cursor: default; }
+
+  #status {
+    font-weight: bold;
+    min-width: 190px;
+    text-align: right;
+    font-size: 15px;
+  }
+  #status.ok { color: var(--ok); }
+  #status.erro { color: var(--erro); }
+  #status.pendente { color: var(--vermelho); }
+
+  /* ---------- Barra de setores (as "flags") ---------- */
+  .setores {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+  }
+
+  .setor-btn {
+    flex: 1 1 0;
+    min-width: 150px;
+    padding: 16px 18px;
+    font-size: 19px;
+    font-weight: bold;
+    background: #fff;
+    color: var(--texto-suave);
+    border: 2px solid var(--borda);
+    border-radius: 10px;
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(18, 58, 107, .06);
+    transition: transform .05s, border-color .1s;
+  }
+  .setor-btn:hover { border-color: var(--azul); color: var(--azul); }
+  .setor-btn:active { transform: translateY(1px); }
+  .setor-btn.ativo {
+    color: var(--azul);
+    border-color: var(--azul);
+    box-shadow: inset 0 -6px 0 var(--laranja), 0 1px 3px rgba(18, 58, 107, .1);
+  }
+
+  /* ---------- Grid ---------- */
+  .moldura {
+    background: #fff;
+    border: 1px solid var(--borda);
+    border-radius: 12px;
+    overflow-x: hidden;   /* nunca arrasta a grade para o lado */
+    overflow-y: auto;     /* apenas rolagem vertical */
+    max-height: calc(100vh - 200px);
+    box-shadow: 0 2px 8px rgba(18, 58, 107, .08);
+  }
+
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    table-layout: fixed;   /* colunas proporcionais: a tabela nunca ultrapassa a largura visível */
+    background: #fff;
+  }
+
+  th, td {
+    border: 1px solid #dfe4ec;
+    padding: 0;
+    text-align: center;
+    height: 52px;
+  }
+
+  thead th {
+    background: var(--azul);
+    color: #fff;
+    font-size: 15px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: .6px;
+    padding: 12px 8px;
+    line-height: 1.15;
+    white-space: normal;   /* deixa o título quebrar em duas linhas em vez de cortar */
+    overflow-wrap: break-word;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  /* Cabeçalho padronizado: mesma fonte em todas as colunas */
+  thead th.cam { font-size: 15px; }
+
+  .cam {
+    background: var(--azul-clarinho);
+    color: var(--azul);
+    font-weight: bold;
+    font-size: 21px;
+    width: 6%;
+  }
+  /* Larguras proporcionais (somam 100%) — nunca geram rolagem lateral */
+  .col-op { width: 12%; }
+  .col-conf { width: 12%; }
+  .col-hora { width: 10.5%; }
+  .col-inc { width: 11%; }
+  .col-motivo { width: 17%; }
+
+  /* ---------- Campos ---------- */
+  select, .hora {
+    width: 100%;
+    height: 100%;
+    border: none;
+    background: transparent;
+    font-family: inherit;
+    font-size: 18px;
+    color: var(--texto);
+    text-align: center;
+    padding: 6px 12px;
+    cursor: pointer;
+  }
+  select { font-weight: bold; }
+
+  .hora {
+    font-size: 21px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    color: var(--azul);
+    cursor: text;
+  }
+  .hora::placeholder { color: #b7c0cd; font-weight: normal; letter-spacing: normal; }
+
+  select:focus, .hora:focus {
+    outline: 3px solid var(--laranja);
+    outline-offset: -3px;
+    background: #fff7ec;
+  }
+
+  .hora.invalido {
+    background: var(--aviso-bg);
+    color: var(--erro);
+    font-weight: bold;
+  }
+
+  /* Início/fim provavelmente trocados: aviso sem mostrar a duração */
+  .hora.suspeito {
+    background: #fff4e0;
+    box-shadow: inset 0 -3px 0 var(--laranja);
+  }
+
+  /* ---------- Inconsistência (caixinha grande, fácil de acertar) ---------- */
+  td.inc { padding: 0; }
+  td.inc input[type="checkbox"] {
+    width: 28px;
+    height: 28px;
+    cursor: pointer;
+    accent-color: var(--vermelho);
+    margin: 0;
+  }
+  td.inc input[type="checkbox"]:focus {
+    outline: 3px solid var(--laranja);
+    outline-offset: 2px;
+  }
+
+  /* ---------- Motivo da inconsistência (texto até 200 caracteres) ---------- */
+  input.txt-motivo {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 6px 8px;
+    font: inherit;
+    border: 1px solid #cfd6e4;
+    border-radius: 6px;
+  }
+  input.txt-motivo:focus {
+    outline: none;
+    border-color: var(--azul);
+  }
+  input.txt-motivo:disabled {
+    background: #f0f2f6;
+    border-color: #e2e6ee;
+    color: #aab1bf;
+    cursor: not-allowed;
+  }
+
+  tr.preenchida .cam { background: #d8ecdd; color: var(--ok-escuro); }
+  tbody tr:nth-child(even) td { background: #fafbfd; }
+
+  /* Linha com inconsistência fica visivelmente marcada */
+  tbody tr.com-inconsistencia td { background: #fdecea; }
+  tbody tr.com-inconsistencia .cam { background: #f9c9c4; color: var(--erro); }
+  tbody tr.com-inconsistencia td.inc { box-shadow: inset 3px 0 0 var(--vermelho); }
+
+  tbody tr:hover td { background: #fff7ec; }
+  tbody tr:hover .cam { background: #ffe6c2; }
+
+  /* ---------- Rodapé de ajuda ---------- */
+  .ajuda {
+    margin-top: 14px;
+    padding: 14px 18px;
+    background: #fff;
+    border: 1px solid var(--borda);
+    border-left: 5px solid var(--laranja);
+    border-radius: 10px;
+    font-size: 15px;
+    color: var(--texto-suave);
+    line-height: 1.7;
+  }
+  .ajuda b { color: var(--azul); }
+
+  #carregando {
+    padding: 60px;
+    text-align: center;
+    font-size: 20px;
+    color: var(--texto-suave);
+  }
+
+  .oculto { display: none !important; }
+
+  /* ---------- Telas menores ---------- */
+  @media (max-width: 700px) {
+    .titulo { order: 3; width: 100%; margin: 4px 0; }
+    #status { min-width: 0; width: 100%; text-align: left; }
+    .col-hora { width: 96px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="banner" class="oculto"></div>
+
+<div class="topo">
+  <img class="logo" src="imagens/Distribuidora_KEM.png" alt="KEM Distribuidora de Alimentos">
+  <div class="titulo">
+    <h1>Grid de Operação</h1>
+    <div class="sub">Tempos de separação</div>
+  </div>
+  <div class="campo-data">
+    <label for="data">Data:</label>
+    <input type="date" id="data">
+  </div>
+  <button id="salvar" disabled>Salvar na planilha</button>
+  <div id="status"></div>
+</div>
+
+<div class="setores" id="setores"></div>
+
+<div id="carregando">Carregando...</div>
+
+<div class="moldura oculto" id="moldura">
+  <table>
+    <thead>
+      <tr>
+        <th class="cam">Frota</th>
+        <th id="cab-setor" class="col-op">Separador</th>
+        <th class="col-conf">Conferente</th>
+        <th class="col-hora">Hora início</th>
+        <th class="col-hora">Hora Fim</th>
+        <th class="col-hora">Início operação</th>
+        <th class="col-hora">Término operação</th>
+        <th class="col-inc">Inconsistência</th>
+        <th class="col-motivo">Motivo</th>
+      </tr>
+    </thead>
+    <tbody id="corpo"></tbody>
+  </table>
+</div>
+
+<script> 
+  /* ================================================================
+     CONEXÃO COM A PLANILHA
+
+     Cole abaixo o link /exec do Web App do Apps Script. Enquanto
+     estiver vazio, a página roda em MODO PREVIEW (nada é gravado).
+     ================================================================ */
+  var API_URL = 'https://script.google.com/macros/s/AKfycbzcYMTgbgFZG37Sw5jZsxwxuT1wbn2U6qYEYfkubfRWX6YNjmBBIVViTMiRDjyclAIBWQ/exec';
+  // Seam de teste: em produção __API_URL__ nunca é definido.
+  if (typeof window.__API_URL__ === 'string') API_URL = window.__API_URL__;
+
+  var MODO_PREVIEW = !API_URL;
+
+  /* ================= Backend ================= */
+  // LEITURA por JSONP (tag <script>, sem CORS). GRAVAÇÃO por POST no-cors
+  // seguida de releitura que confirma o que entrou.
+  function RealBackend(url) {
+    var contador = 0;
+
+    function jsonp(params) {
+      return new Promise(function (resolve, reject) {
+        contador += 1;
+        var cb = '__grid_cb_' + contador;
+        var script = document.createElement('script');
+        var pronto = false;
+        var t0 = (window.performance && performance.now) ? performance.now() : Date.now();
+
+        var timer = setTimeout(function () {
+          finalizar();
+          reject(new Error('sem resposta do servidor (tempo esgotado). Confira o link /exec e o acesso "Qualquer pessoa".'));
+        }, 25000);
+
+        function finalizar() {
+          if (pronto) return;
+          pronto = true;
+          clearTimeout(timer);
+          try { delete window[cb]; } catch (e) { window[cb] = undefined; }
+          if (script.parentNode) script.parentNode.removeChild(script);
+        }
+
+        // Validação de tempo de resposta: mede a latência e avisa no console
+        // quando o servidor demora demais (diagnóstico, não altera a tela).
+        function medir() {
+          var fim = (window.performance && performance.now) ? performance.now() : Date.now();
+          var ms = Math.round(fim - t0);
+          if (ms > 8000) console.warn('[grid] resposta lenta do servidor: ' + ms + 'ms — acao=' + (params.acao || '(abertura)'));
+          return ms;
+        }
+
+        window[cb] = function (resposta) {
+          medir();
+          finalizar();
+          resolve(resposta || { ok: false, mensagem: 'resposta vazia' });
+        };
+
+        var qs = ['callback=' + cb];
+        Object.keys(params).forEach(function (k) {
+          qs.push(encodeURIComponent(k) + '=' + encodeURIComponent(params[k]));
+        });
+        script.src = url + '?' + qs.join('&');
+        script.onerror = function () { finalizar(); reject(new Error('falha ao contatar o servidor (rede ou link errado).')); };
+        document.body.appendChild(script);
+      });
+    }
+
+    // Para leituras: desembrulha e transforma erro do servidor em exceção.
+    function jsonpDados(params) {
+      return jsonp(params).then(function (j) {
+        if (!j.ok) throw new Error(j.mensagem || 'erro');
+        return j.dados;
+      });
+    }
+
+    function temAlgo(r) {
+      return !!(r.separador || r.conferente || r.inicio || r.fim || r.op_inicio || r.op_fim || r.inconsistencia || r.motivo);
+    }
+
+    // Só os caminhões preenchidos viram uma linha compacta:
+    //   [frota, separador, conferente, inicio, fim, opInicio, opFim, 0|1, motivo]
+    // O motivo vem por último, para o servidor gravá-lo antes da coluna "Atualizado em".
+    // Isso encurta muito a URL e o trabalho do servidor.
+    function compactar(registros) {
+      var lista = [];
+      Object.keys(registros || {}).forEach(function (cam) {
+        var r = registros[cam] || {};
+        if (!temAlgo(r)) return;
+        lista.push([Number(cam), r.separador || '', r.conferente || '',
+                    r.inicio || '', r.fim || '', r.op_inicio || '', r.op_fim || '',
+                    r.inconsistencia ? 1 : 0, r.motivo || '']);
+      });
+      return lista;
+    }
+
+    function contar(registros) {
+      var n = 0;
+      Object.keys(registros || {}).forEach(function (cam) {
+        if (temAlgo(registros[cam] || {})) n += 1;
+      });
+      return n;
+    }
+
+    // Caminho reserva: se a URL ficaria grande demais para um GET, grava por
+    // POST e relê para confirmar (duas idas, mas sem limite de tamanho).
+    function salvarPorPost(payload) {
+      return fetch(url, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) })
+        .then(function () { return jsonpDados({ acao: 'dia', data: payload.data, setor: payload.setor }); })
+        .then(function (dados) {
+          return { ok: true, mensagem: 'Salvo: ' + contar(dados.registros) + ' lançamento(s)' };
+        })
+        .catch(function (e) {
+          return { ok: false, mensagem: 'Não deu pra confirmar o salvamento: ' + e.message };
+        });
+    }
+
+    return {
+      // Uma chamada só: config + o dia do setor lembrado.
+      inicio: function (setor) { return jsonpDados(setor ? { setor: setor } : {}); },
+      carregarSetor: function (data, setor) { return jsonpDados({ acao: 'dia', data: data, setor: setor }); },
+      salvarSetor: function (payload) {
+        var dados = JSON.stringify(compactar(payload.registros));
+        var tamanho = url.length + encodeURIComponent(dados).length + 120;
+        if (tamanho > 6000) return salvarPorPost(payload);   // raro: grid inteiro cheio
+        // Uma ida e volta: grava e já volta com o resultado do servidor.
+        return jsonp({ acao: 'salvar', data: payload.data, setor: payload.setor, dados: dados })
+          .catch(function (e) { return { ok: false, mensagem: 'Erro ao salvar: ' + e.message }; });
+      },
+    };
+  }
+
+  // Preview: tudo na memória, para testar sem planilha.
+  function PreviewBackend() {
+    var mem = {}; // chave "data|setor"
+    var config = {
+      caminhoes: [35,34,33,32,31,30,29,28,27,26,25,24,23,22,21,20,19,18,17,16,36,37,38],
+      setores: [
+        { id: 'secos1',     nome: 'Secos 1',    cor: '#e6f4ea', operadores: ['Julio','Marcelo','Alzoni'] },
+        { id: 'secos2',     nome: 'Secos 2',    cor: '#e8f0fe', operadores: ['Julio','Alzoni','Marcelo'] },
+        { id: 'resfriados', nome: 'Resfriados', cor: '#fce8e6', operadores: ['Helio','Alaor'] },
+        { id: 'congelados', nome: 'Congelados', cor: '#e0f7fa', operadores: ['Josue','Douglas','Jeferson','Vitor','Andre','Francisco'] },
+      ],
+      conferentes: ['Francisco', 'João Paulo', 'Alzoni'],
+      hoje: new Date().toLocaleDateString('pt-BR'),
+    };
+    function dia(data, setor) {
+      var r = mem[data + '|' + setor];
+      return { data: data, setor: setor, temDados: !!r, registros: r || {} };
+    }
+    return {
+      inicio: function (setor) {
+        var id = (config.setores.filter(function (s) { return s.id === setor; })[0] || config.setores[0]).id;
+        return Promise.resolve({ config: config, dia: dia(config.hoje, id) });
+      },
+      carregarSetor: function (data, setor) { return Promise.resolve(dia(data, setor)); },
+      salvarSetor: function (p) {
+        mem[p.data + '|' + p.setor] = p.registros;
+        return Promise.resolve({ ok: true, mensagem: 'PREVIEW — não foi para a planilha' });
+      },
+    };
+  }
+
+  var Backend = MODO_PREVIEW ? PreviewBackend() : RealBackend(API_URL);
+
+  var CFG = null;
+  var setorAtivo = null;   // id do setor aberto
+  var salvoSnapshot = '';  // estado do grid como está salvo/carregado (JSON)
+  var seqCarregar = 0;     // controla qual carregamento é o mais recente
+
+  /* ================= Início ================= */
+  // Manda já o setor lembrado para o servidor devolver config + dia numa chamada só.
+  Backend.inicio(setorLembrado()).then(function (res) {
+    CFG = res.config;
+    // Padrão é o dia anterior: eles lançam sempre o movimento de ontem.
+    document.getElementById('data').value = isoDiaAnterior(CFG.hoje);
+    montarBarraSetores();
+
+    document.getElementById('carregando').classList.add('oculto');
+    document.getElementById('moldura').classList.remove('oculto');
+    document.getElementById('salvar').disabled = false;
+
+    if (MODO_PREVIEW) {
+      var b = document.getElementById('banner');
+      b.textContent = 'MODO PREVIEW — nada é gravado na planilha. Para conectar, cole o link do Apps Script na variável API_URL do index.html.';
+      b.classList.remove('oculto');
+    }
+
+    document.getElementById('data').addEventListener('change', function () {
+      if (!confirmarDescarte()) { this.value = paraISO(dataAtualBR()); return; }
+      carregar();
+    });
+    document.getElementById('salvar').addEventListener('click', salvar);
+    window.addEventListener('beforeunload', function (e) {
+      if (temAlteracoes()) { e.preventDefault(); e.returnValue = ''; }
+    });
+
+    // Abre no dia anterior: precisa carregar esse dia (o res.dia veio de hoje).
+    selecionarSetor((res.dia && res.dia.setor) || setorInicial(), true, null);
+  }).catch(function (e) {
+    document.getElementById('carregando').textContent =
+      'Erro ao carregar: ' + e.message + '. Confira o link do Apps Script (API_URL).';
+  });
+
+  /* ================= Setores ================= */
+  // Lido antes de CFG existir (vai junto no pedido de abertura).
+  function setorLembrado() {
+    try { return localStorage.getItem('grid_setor') || ''; } catch (e) { return ''; }
+  }
+
+  function setorInicial() {
+    var salvo = setorLembrado();
+    if (salvo && CFG.setores.some(function (s) { return s.id === salvo; })) return salvo;
+    return CFG.setores[0].id;
+  }
+
+  function setorPorId(id) {
+    return CFG.setores.filter(function (s) { return s.id === id; })[0] || null;
+  }
+
+  function montarBarraSetores() {
+    var barra = document.getElementById('setores');
+    barra.innerHTML = '';
+    CFG.setores.forEach(function (s) {
+      var btn = document.createElement('button');
+      btn.className = 'setor-btn';
+      btn.textContent = s.nome;
+      btn.dataset.setor = s.id;
+      btn.addEventListener('click', function () { selecionarSetor(s.id, false); });
+      barra.appendChild(btn);
+    });
+  }
+
+  /** jaCarregado: dados do dia que já vieram do servidor (evita uma chamada). */
+  function selecionarSetor(id, forcar, jaCarregado) {
+    if (!forcar && id === setorAtivo) return;
+    if (!forcar && !confirmarDescarte()) return;
+
+    setorAtivo = id;
+    try { localStorage.setItem('grid_setor', id); } catch (e) {}
+
+    var setor = setorPorId(id);
+    document.querySelectorAll('.setor-btn').forEach(function (b) {
+      var ativo = b.dataset.setor === id;
+      b.classList.toggle('ativo', ativo);
+      b.style.background = ativo ? setor.cor : '#fff';
+    });
+    document.getElementById('cab-setor').textContent = 'Separador';
+
+    desenharGrid(setor);
+
+    if (jaCarregado && jaCarregado.registros) {
+      preencher(jaCarregado.registros);
+      marcarSalvo();
+      definirStatus(jaCarregado.temDados ? 'Setor carregado da planilha' : 'Nada lançado ainda neste setor/dia', 'ok');
+    } else {
+      carregar();
+    }
+  }
+
+  function confirmarDescarte() {
+    if (!temAlteracoes()) return true;
+    return confirm('Você tem alterações não salvas neste setor. Continuar vai descartá-las. Prosseguir?');
+  }
+
+  /* ================= Desenho ================= */
+  function desenharGrid(setor) {
+    var corpo = document.getElementById('corpo');
+    corpo.innerHTML = '';
+
+    // Monta todas as linhas fora da árvore e insere de uma vez: 1 reflow no
+    // lugar de um por caminhão (mais rápido ao trocar de setor).
+    var frag = document.createDocumentFragment();
+    var caminhoes = CFG.caminhoes.slice().sort(function (a, b) { return Number(a) - Number(b); });
+    caminhoes.forEach(function (cam) {
+      var tr = document.createElement('tr');
+      tr.dataset.cam = cam;
+
+      var tdCam = document.createElement('td');
+      tdCam.className = 'cam';
+      tdCam.textContent = cam;
+      tr.appendChild(tdCam);
+
+      // Separador (quem separou) — lista do setor
+      tr.appendChild(montarSelect('separador', setor.operadores, tr));
+
+      // Conferente (quem conferiu) — lista única para todos os setores
+      tr.appendChild(montarSelect('conferente', CFG.conferentes || [], tr));
+
+      // Dois pares de hora: separação (inicio/fim) e operação (op_inicio/op_fim).
+      // A coluna Time NÃO aparece: é interna, calculada no Apps Script (Fim − Início).
+      ['inicio', 'fim', 'op_inicio', 'op_fim'].forEach(function (qual) {
+        var td = document.createElement('td');
+        var inp = document.createElement('input');
+        inp.type = 'text';
+        inp.className = 'hora';
+        inp.inputMode = 'numeric';
+        inp.maxLength = 5;
+        inp.placeholder = '--:--';
+        inp.dataset.campo = qual;
+        ligarCampoHora(inp, tr);
+        td.appendChild(inp);
+        tr.appendChild(td);
+      });
+
+      // Inconsistência — caixinha; marcada grava "Sim", vazia grava "Não"
+      var tdInc = document.createElement('td');
+      tdInc.className = 'inc';
+      var chk = document.createElement('input');
+      chk.type = 'checkbox';
+      chk.dataset.campo = 'inconsistencia';
+      chk.title = 'Marque se houve inconsistência nesta carga';
+      chk.addEventListener('change', function () {
+        marcarSujo();
+        atualizarLinha(tr);
+        // Ao marcar, leva o cursor direto para o motivo.
+        if (chk.checked) tr.querySelector('[data-campo="motivo"]').focus();
+      });
+      tdInc.appendChild(chk);
+      tr.appendChild(tdInc);
+
+      // Motivo da inconsistência — texto livre, no máximo 200 caracteres
+      var tdMotivo = document.createElement('td');
+      tdMotivo.className = 'motivo';
+      var inpMotivo = document.createElement('input');
+      inpMotivo.type = 'text';
+      inpMotivo.className = 'txt-motivo';
+      inpMotivo.maxLength = 200;
+      inpMotivo.dataset.campo = 'motivo';
+      inpMotivo.placeholder = 'Motivo da inconsistência';
+      inpMotivo.title = 'Descreva o motivo da inconsistência (até 200 caracteres)';
+      inpMotivo.addEventListener('input', function () { marcarSujo(); atualizarLinha(tr); });
+      tdMotivo.appendChild(inpMotivo);
+      tr.appendChild(tdMotivo);
+
+      frag.appendChild(tr);
+    });
+    corpo.appendChild(frag);
+  }
+
+  /** Uma célula com menu suspenso (separador ou conferente). */
+  function montarSelect(campo, nomes, tr) {
+    var td = document.createElement('td');
+    var sel = document.createElement('select');
+    sel.dataset.campo = campo;
+    sel.appendChild(new Option('', ''));
+    (nomes || []).forEach(function (nome) { sel.appendChild(new Option(nome, nome)); });
+    sel.addEventListener('change', function () { marcarSujo(); atualizarLinha(tr); });
+    td.appendChild(sel);
+    return td;
+  }
+
+  /* ================= Campo de hora ================= */
+  function ligarCampoHora(inp, tr) {
+    inp.addEventListener('input', function () {
+      var d = inp.value.replace(/\D/g, '').slice(0, 4);
+      inp.value = d.length >= 3 ? d.slice(0, 2) + ':' + d.slice(2) : d;
+      marcarSujo();
+      atualizarLinha(tr);
+    });
+    inp.addEventListener('blur', function () {
+      inp.value = normalizarHora(inp.value);
+      atualizarLinha(tr);
+    });
+    inp.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); proximoCampo(inp); }
+    });
+    inp.addEventListener('focus', function () { inp.select(); });
+  }
+
+  function normalizarHora(texto) {
+    var d = String(texto).replace(/\D/g, '');
+    if (!d) return '';
+    if (d.length === 1) d = '0' + d + '00';
+    else if (d.length === 2) d = d + '00';
+    else if (d.length === 3) d = '0' + d;
+    var h = d.slice(0, 2), m = d.slice(2, 4);
+    if (Number(h) > 23 || Number(m) > 59) return texto;
+    return h + ':' + m;
+  }
+
+  function horaValida(v) { return /^([01]\d|2[0-3]):[0-5]\d$/.test(v); }
+
+  function proximoCampo(atual) {
+    var campos = Array.prototype.slice.call(
+      document.querySelectorAll('#corpo select, #corpo .hora, #corpo input[type="checkbox"]'));
+    var i = campos.indexOf(atual);
+    if (i > -1 && i < campos.length - 1) campos[i + 1].focus();
+  }
+
+  /* ================= Conferência ao vivo ================= */
+  // O tempo (Time) não é mostrado — é informação interna, calculada no
+  // Apps Script ao gravar. Aqui só validamos o que o operador digitou.
+  function atualizarLinha(tr) {
+    // Valida os dois pares: separação (inicio/fim) e operação (op_inicio/op_fim).
+    [['inicio', 'fim'], ['op_inicio', 'op_fim']].forEach(function (par) {
+      var ini = tr.querySelector('[data-campo="' + par[0] + '"]');
+      var fim = tr.querySelector('[data-campo="' + par[1] + '"]');
+
+      // Formato errado (ex.: 25:99) fica vermelho
+      [ini, fim].forEach(function (c) {
+        var errado = c.value !== '' && c.value.length >= 4 && !horaValida(c.value);
+        c.classList.toggle('invalido', errado);
+      });
+
+      // Intervalo acima de 12h quase sempre é hora trocada. Avisamos sem
+      // revelar a duração — só pedindo para conferir.
+      var suspeito = false;
+      if (horaValida(ini.value) && horaValida(fim.value)) {
+        var diff = minutos(fim.value) - minutos(ini.value);
+        if (diff < 0) diff += 24 * 60;
+        suspeito = diff > 12 * 60;
+      }
+      [ini, fim].forEach(function (c) {
+        c.classList.toggle('suspeito', suspeito);
+        c.title = suspeito ? 'Confira as horas: o início e o fim parecem trocados.' : '';
+      });
+    });
+
+    var marcado = tr.querySelector('[data-campo="inconsistencia"]').checked;
+
+    // Motivo só faz sentido quando há inconsistência: sem marcação,
+    // o campo fica desabilitado e é limpo para não sobrar texto órfão.
+    var motivo = tr.querySelector('[data-campo="motivo"]');
+    motivo.disabled = !marcado;
+    if (!marcado) motivo.value = '';
+
+    var temDado = marcado || Array.prototype.some.call(
+      tr.querySelectorAll('select, .hora'), function (c) { return c.value !== ''; });
+    tr.classList.toggle('preenchida', temDado);
+    tr.classList.toggle('com-inconsistencia', marcado);
+  }
+
+  function minutos(hhmm) {
+    var p = hhmm.split(':');
+    return Number(p[0]) * 60 + Number(p[1]);
+  }
+
+  /* ================= Carregar / Salvar ================= */
+  function carregar() {
+    var meu = ++seqCarregar;
+    travar(true, 'Carregando...');
+    Backend.carregarSetor(dataAtualBR(), setorAtivo)
+      .then(function (res) {
+        // Resposta de um carregamento antigo (ex.: troca rápida de setor):
+        // descarta para não sobrescrever o setor/dia atual com dados velhos.
+        if (meu !== seqCarregar) return;
+        preencher(res.registros);
+        marcarSalvo();
+        travar(false, res.temDados ? 'Setor carregado da planilha' : 'Nada lançado ainda neste setor/dia', 'ok');
+      })
+      .catch(function (e) {
+        if (meu !== seqCarregar) return;
+        travar(false, 'Erro: ' + e.message, 'erro');
+      });
+  }
+
+  function preencher(registros) {
+    registros = registros || {};
+    document.querySelectorAll('#corpo tr').forEach(function (tr) {
+      var r = registros[tr.dataset.cam] || {};
+      // Conferentes antigos que saíram da lista continuam visíveis ao reabrir.
+      [['separador', r.separador], ['conferente', r.conferente]].forEach(function (par) {
+        var sel = tr.querySelector('[data-campo="' + par[0] + '"]');
+        var v = par[1] || '';
+        sel.value = v;
+        if (par[0] === 'conferente' && v && sel.value !== v) {
+          sel.appendChild(new Option(v, v));
+          sel.value = v;
+        }
+      });
+      ['inicio', 'fim', 'op_inicio', 'op_fim'].forEach(function (campo) {
+        tr.querySelector('[data-campo="' + campo + '"]').value = normalizarHora(r[campo] || '');
+      });
+      tr.querySelector('[data-campo="inconsistencia"]').checked = r.inconsistencia === true;
+      tr.querySelector('[data-campo="motivo"]').value = (r.motivo || '').slice(0, 200);
+      atualizarLinha(tr);
+    });
+  }
+
+  function salvar() {
+    var invalidos = document.querySelectorAll('#corpo .hora.invalido').length;
+    if (invalidos && !confirm('Há ' + invalidos + ' hora(s) com formato errado (em vermelho). Salvar mesmo assim?')) return;
+
+    travar(true, 'Salvando...');
+    Backend.salvarSetor({ data: dataAtualBR(), setor: setorAtivo, registros: coletar() })
+      .then(function (res) {
+        if (res.ok) marcarSalvo();
+        travar(false, res.mensagem, res.ok ? 'ok' : 'erro');
+      })
+      .catch(function (e) { travar(false, 'Erro ao salvar: ' + e.message, 'erro'); });
+  }
+
+  function coletar() {
+    var registros = {};
+    document.querySelectorAll('#corpo tr').forEach(function (tr) {
+      registros[tr.dataset.cam] = {
+        separador: tr.querySelector('[data-campo="separador"]').value,
+        conferente: tr.querySelector('[data-campo="conferente"]').value,
+        inicio: normalizarHora(tr.querySelector('[data-campo="inicio"]').value),
+        fim: normalizarHora(tr.querySelector('[data-campo="fim"]').value),
+        op_inicio: normalizarHora(tr.querySelector('[data-campo="op_inicio"]').value),
+        op_fim: normalizarHora(tr.querySelector('[data-campo="op_fim"]').value),
+        inconsistencia: tr.querySelector('[data-campo="inconsistencia"]').checked,
+        motivo: tr.querySelector('[data-campo="motivo"]').value.trim().slice(0, 200),
+      };
+    });
+    return registros;
+  }
+
+  /* ================= Utilidades ================= */
+  // "Sujo" = o que está na tela difere do último estado salvo/carregado.
+  // Assim, se o operador digita e depois apaga, deixa de contar como alteração.
+  function instantaneo() { return JSON.stringify(coletar()); }
+  function marcarSalvo() { salvoSnapshot = instantaneo(); }
+  function temAlteracoes() { return instantaneo() !== salvoSnapshot; }
+
+  function marcarSujo() {
+    if (temAlteracoes()) definirStatus('Alterações não salvas', 'pendente');
+    else definirStatus('Sem alterações pendentes', 'ok');
+  }
+
+  function travar(ocupado, msg, classe) {
+    document.getElementById('salvar').disabled = ocupado;
+    definirStatus(msg, classe || '');
+  }
+
+  var elStatus = null;
+  function definirStatus(msg, classe) {
+    if (!elStatus) elStatus = document.getElementById('status');
+    elStatus.textContent = msg;
+    elStatus.className = classe || '';
+  }
+
+  function dataAtualBR() {
+    var v = document.getElementById('data').value;
+    if (!v) return CFG.hoje;
+    var p = v.split('-');
+    return p[2] + '/' + p[1] + '/' + p[0];
+  }
+
+  function paraISO(dataBR) {
+    var p = dataBR.split('/');
+    return p[2] + '-' + p[1] + '-' + p[0];
+  }
+
+  // Recebe "dd/mm/aaaa" e devolve o dia anterior em ISO "aaaa-mm-dd".
+  // Usa objeto Date para tratar viradas de mês/ano corretamente.
+  function isoDiaAnterior(dataBR) {
+    var p = dataBR.split('/');
+    var d = new Date(Number(p[2]), Number(p[1]) - 1, Number(p[0]));
+    d.setDate(d.getDate() - 1);
+    var mm = ('0' + (d.getMonth() + 1)).slice(-2);
+    var dd = ('0' + d.getDate()).slice(-2);
+    return d.getFullYear() + '-' + mm + '-' + dd;
+  }
+
+  // Exposto para os testes.
+  window.coletar = coletar;
+  window.Backend = Backend;
+  window.getSetorAtivo = function () { return setorAtivo; };
+</script>
+</body>
+</html>
