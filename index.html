@@ -210,7 +210,7 @@
     const campo = (tipo, placeholder = '', extra = '') =>
       `<td class="celula"><input type="${tipo}" placeholder="${placeholder}" ${extra}></td>`;
 
-    for (let numero = 1; numero <= 20; numero++) {
+    for (let numero = 1; numero <= 5; numero++) {
       linhas.insertAdjacentHTML('beforeend', `
         <tr>
           ${campo('text', 'Fornecedor')}
