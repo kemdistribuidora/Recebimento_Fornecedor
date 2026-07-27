@@ -197,6 +197,7 @@
       </table>
     </section>
   </main>
+  <iframe id="respostaAppsScript" name="respostaAppsScript" hidden></iframe>
 
   <script>
     // URL da implantação do Apps Script que recebe os lançamentos do GitHub Pages.
@@ -275,15 +276,10 @@
 
     function enviarParaAppsScript(payload) {
       // Um form POST funciona entre GitHub Pages e Apps Script sem depender de CORS.
-      const iframe = document.createElement('iframe');
-      iframe.name = 'respostaAppsScript';
-      iframe.hidden = true;
-      document.body.appendChild(iframe);
-
       const formulario = document.createElement('form');
       formulario.method = 'POST';
       formulario.action = URL_APPS_SCRIPT;
-      formulario.target = iframe.name;
+      formulario.target = 'respostaAppsScript';
       formulario.hidden = true;
 
       const conteudo = document.createElement('input');
@@ -293,11 +289,7 @@
       formulario.appendChild(conteudo);
       document.body.appendChild(formulario);
       formulario.submit();
-
-      window.setTimeout(() => {
-        formulario.remove();
-        iframe.remove();
-      }, 5000);
+      formulario.remove();
     }
 
     document.getElementById('salvar').addEventListener('click', () => {
