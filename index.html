@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Recebimento de Fornecedor</title>
+  <link rel="icon" type="image/png" href="imagens/icone.png">
   <style>
     :root {
       --azul: #143f73;
@@ -43,25 +44,7 @@
     }
 
     .marca { display: flex; align-items: center; gap: 15px; min-width: 390px; }
-    .logo {
-      width: 108px;
-      color: var(--azul);
-      font-size: 40px;
-      font-weight: 800;
-      font-style: italic;
-      letter-spacing: -4px;
-      line-height: .75;
-    }
-    .logo small {
-      display: block;
-      margin: 0 0 7px 1px;
-      color: #2876aa;
-      font-size: 6px;
-      font-style: normal;
-      letter-spacing: .4px;
-      white-space: nowrap;
-    }
-    .logo span { color: var(--vermelho); }
+    .logo-kem { width: 110px; height: auto; display: block; }
     .titulo h1 { margin: 0; color: var(--azul); font-size: 22px; }
     .titulo p { margin: 1px 0 0; color: #596575; font-size: 13px; font-weight: 600; }
 
@@ -157,7 +140,7 @@
     @media (max-width: 620px) {
       .pagina { padding: 6px; }
       .marca { gap: 7px; }
-      .logo { width: 85px; font-size: 32px; }
+      .logo-kem { width: 85px; }
       .titulo h1 { font-size: 17px; }
       .acoes { gap: 8px; }
       .campo-data input { width: 155px; }
@@ -171,7 +154,7 @@
   <main class="pagina">
     <header class="cabecalho">
       <div class="marca">
-        <div class="logo"><small>DISTRIBUIDORA DE ALIMENTOS</small>K<span>e</span>m</div>
+        <img class="logo-kem" src="imagens/Distribuidora_KEM.png" alt="Kem Distribuidora de Alimentos">
         <div class="titulo">
           <h1>Recebimento de Fornecedor</h1>
           <p>Controle de recebimento</p>
