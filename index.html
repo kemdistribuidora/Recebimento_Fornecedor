@@ -106,10 +106,8 @@
       text-align: center;
       text-transform: uppercase;
     }
-    thead th:first-child { background: #e9f0f9; color: var(--azul); }
     tbody td { height: 52px; padding: 5px; border: 1px solid #d8e0ea; background: #fff; }
     tbody tr:nth-child(even) td { background: #f8fafc; }
-    tbody td:first-child { padding: 0; background: #eef4fc; color: var(--azul); font-size: 18px; font-weight: 700; text-align: center; }
     .celula input, .celula select {
       width: 100%;
       height: 35px;
@@ -125,7 +123,7 @@
     .celula input[type="number"] { text-align: right; }
     .celula select { cursor: pointer; }
 
-    .col-n { width: 56px; } .col-data { width: 105px; } .col-forn { width: 190px; }
+    .col-forn { width: 190px; }
     .col-nfe { width: 105px; } .col-lote { width: 120px; } .col-validade { width: 110px; }
     .col-produto { width: 245px; } .col-quantidade { width: 135px; } .col-unidade { width: 135px; }
     .col-temperatura { width: 110px; } .col-fabricacao { width: 110px; } .col-conferente { width: 175px; }
@@ -169,19 +167,18 @@
       </div>
     </header>
 
-    <nav class="abas" aria-label="Setores de recebimento">
+    <br>
+<!--     <nav class="abas" aria-label="Setores de recebimento">
       <button class="aba ativa" type="button">Secos 1</button>
       <button class="aba" type="button">Secos 2</button>
       <button class="aba" type="button">Resfriados</button>
       <button class="aba" type="button">Congelados</button>
-    </nav>
+    </nav> -->
 
     <section class="grade" aria-label="Lançamentos de recebimento">
       <table>
         <thead>
           <tr>
-            <th class="col-n">#</th>
-            <th class="col-data">Data</th>
             <th class="col-forn">Fornecedor</th>
             <th class="col-nfe">NFE</th>
             <th class="col-lote">Lote</th>
@@ -215,8 +212,6 @@
     for (let numero = 1; numero <= 20; numero++) {
       linhas.insertAdjacentHTML('beforeend', `
         <tr>
-          <td>${numero}</td>
-          ${campo('date')}
           ${campo('text', 'Fornecedor')}
           ${campo('text', 'NFE')}
           ${campo('text', 'Lote')}
@@ -226,7 +221,15 @@
           <td class="celula"><select aria-label="Unidade de medida"><option value=""></option><option>UN</option><option>KG</option><option>CX</option><option>PC</option><option>LT</option></select></td>
           ${campo('text', 'Ex.: 5 °C')}
           ${campo('date')}
-          ${campo('text', 'Conferente')}
+          <td class="celula">
+            <select aria-label="Conferente">
+              <option value=""></option>
+              <option>Alzoni</option>
+              <option>João Paulo</option>
+              <option>Francisco</option>
+              <option>Alaor</option>
+            </select>
+          </td>
           ${campo('time')}
           ${campo('time')}
         </tr>`);
@@ -240,8 +243,63 @@
       });
     });
 
+    function valorDaCelula(celula) {
+      return celula.querySelector('input, select').value.trim();
+    }
+
+    function obterLancamentos() {
+      return [...linhas.rows]
+        .map(linha => {
+          const celulas = linha.cells;
+          return {
+            data: dataLancamento.value,
+            fornecedor: valorDaCelula(celulas[0]),
+            nfe: valorDaCelula(celulas[1]),
+            lote: valorDaCelula(celulas[2]),
+            validade: valorDaCelula(celulas[3]),
+            produtoMaster: valorDaCelula(celulas[4]),
+            quantidadeDaNota: valorDaCelula(celulas[5]),
+            unidadeDeMedida: valorDaCelula(celulas[6]),
+            temperatura: valorDaCelula(celulas[7]),
+            fabricacao: valorDaCelula(celulas[8]),
+            conferente: valorDaCelula(celulas[9]),
+            horaChegada: valorDaCelula(celulas[10]),
+            horaSaida: valorDaCelula(celulas[11])
+          };
+        })
+        .filter(lancamento => Object.entries(lancamento)
+          .some(([campo, valor]) => campo !== 'data' && valor !== ''));
+    }
+
     document.getElementById('salvar').addEventListener('click', () => {
-      status.textContent = 'Integração com a planilha será conectada no Apps Script.';
+      const lancamentos = obterLancamentos();
+      const setor = document.querySelector('.aba.ativa')?.textContent || 'Recebimento';
+
+      if (!dataLancamento.value) {
+        status.textContent = 'Informe a data do lançamento.';
+        dataLancamento.focus();
+        return;
+      }
+
+      if (!lancamentos.length) {
+        status.textContent = 'Preencha ao menos uma linha para salvar.';
+        return;
+      }
+
+      // Cada objeto já contém a data definida no cabeçalho.
+      if (typeof google !== 'undefined' && google.script && google.script.run) {
+        google.script.run
+          .withSuccessHandler(mensagem => {
+            status.textContent = mensagem || `${lancamentos.length} lançamento(s) salvo(s) com sucesso.`;
+          })
+          .withFailureHandler(erro => {
+            status.textContent = `Não foi possível salvar: ${erro.message || erro}`;
+          })
+          .salvarRecebimentos(setor, lancamentos);
+        return;
+      }
+
+      status.textContent = `${lancamentos.length} lançamento(s) pronto(s) para salvar.`;
     });
   </script>
 </body>
