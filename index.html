@@ -199,6 +199,8 @@
   </main>
 
   <script>
+    // URL da implantação do Apps Script que recebe os lançamentos do GitHub Pages.
+    const URL_APPS_SCRIPT = 'https://script.google.com/macros/s/AKfycbzRrkPr5nc_SvfFA_ryM12R1YZh0IASVxVg4iDp1FWGi4g3t0zZxfkDE89GH28JKhLWvg/exec';
     const linhas = document.getElementById('linhas');
     const dataLancamento = document.getElementById('dataLancamento');
     const status = document.getElementById('status');
@@ -271,6 +273,33 @@
           .some(([campo, valor]) => campo !== 'data' && valor !== ''));
     }
 
+    function enviarParaAppsScript(payload) {
+      // Um form POST funciona entre GitHub Pages e Apps Script sem depender de CORS.
+      const iframe = document.createElement('iframe');
+      iframe.name = 'respostaAppsScript';
+      iframe.hidden = true;
+      document.body.appendChild(iframe);
+
+      const formulario = document.createElement('form');
+      formulario.method = 'POST';
+      formulario.action = URL_APPS_SCRIPT;
+      formulario.target = iframe.name;
+      formulario.hidden = true;
+
+      const conteudo = document.createElement('input');
+      conteudo.type = 'hidden';
+      conteudo.name = 'payload';
+      conteudo.value = JSON.stringify(payload);
+      formulario.appendChild(conteudo);
+      document.body.appendChild(formulario);
+      formulario.submit();
+
+      window.setTimeout(() => {
+        formulario.remove();
+        iframe.remove();
+      }, 5000);
+    }
+
     document.getElementById('salvar').addEventListener('click', () => {
       const lancamentos = obterLancamentos();
       const setor = document.querySelector('.aba.ativa')?.textContent || 'Recebimento';
@@ -299,7 +328,8 @@
         return;
       }
 
-      status.textContent = `${lancamentos.length} lançamento(s) pronto(s) para salvar.`;
+      enviarParaAppsScript({ setor, lancamentos });
+      status.textContent = `${lancamentos.length} lançamento(s) enviado(s). Confira a planilha em instantes.`;
     });
   </script>
 </body>
