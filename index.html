@@ -197,11 +197,9 @@
       </table>
     </section>
   </main>
-  <iframe id="respostaAppsScript" name="respostaAppsScript" hidden></iframe>
-
   <script>
     // URL da implantação do Apps Script que recebe os lançamentos do GitHub Pages.
-    const URL_APPS_SCRIPT = 'https://script.google.com/macros/s/AKfycbxRPnYh5REyeNv9uYjcXCFfdFUtuxcucRac3i6EPpaKnqPBOgufalkeZ0uddfaOt8TtiA/exec';
+    const URL_APPS_SCRIPT = 'https://script.google.com/macros/s/AKfycbzfJEt3t9pwHAXf8-veJBubnNredTIcF-_OOUgfsAd9-DgN4rEvcClqrvNC8miH-M9itA/exec';
     const linhas = document.getElementById('linhas');
     const dataLancamento = document.getElementById('dataLancamento');
     const status = document.getElementById('status');
@@ -274,25 +272,19 @@
           .some(([campo, valor]) => campo !== 'data' && valor !== ''));
     }
 
-    function enviarParaAppsScript(payload) {
-      // Um form POST funciona entre GitHub Pages e Apps Script sem depender de CORS.
-      const formulario = document.createElement('form');
-      formulario.method = 'POST';
-      formulario.action = URL_APPS_SCRIPT;
-      formulario.target = 'respostaAppsScript';
-      formulario.hidden = true;
-
-      const conteudo = document.createElement('input');
-      conteudo.type = 'hidden';
-      conteudo.name = 'payload';
-      conteudo.value = JSON.stringify(payload);
-      formulario.appendChild(conteudo);
-      document.body.appendChild(formulario);
-      formulario.submit();
-      formulario.remove();
+    async function enviarParaAppsScript(payload) {
+      // 'no-cors' permite o POST do GitHub Pages para o Apps Script.
+      // A resposta é opaca no navegador, mas o Apps Script recebe o payload normalmente.
+      const corpo = new URLSearchParams({ payload: JSON.stringify(payload) });
+      await fetch(URL_APPS_SCRIPT, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+        body: corpo.toString()
+      });
     }
 
-    document.getElementById('salvar').addEventListener('click', () => {
+    document.getElementById('salvar').addEventListener('click', async () => {
       const lancamentos = obterLancamentos();
       const setor = document.querySelector('.aba.ativa')?.textContent || 'Recebimento';
 
@@ -320,8 +312,13 @@
         return;
       }
 
-      enviarParaAppsScript({ setor, lancamentos });
-      status.textContent = `${lancamentos.length} lançamento(s) enviado(s). Confira a planilha em instantes.`;
+      try {
+        status.textContent = 'Enviando lançamentos para a planilha...';
+        await enviarParaAppsScript({ setor, lancamentos });
+        status.textContent = `${lancamentos.length} lançamento(s) enviado(s). Confira a planilha em instantes.`;
+      } catch (erro) {
+        status.textContent = `Falha ao enviar: ${erro.message || erro}`;
+      }
     });
   </script>
 </body>
