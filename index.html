@@ -212,7 +212,7 @@
   </main>
   <script>
     // URL da implantação do Apps Script que recebe os lançamentos do GitHub Pages.
-    const URL_APPS_SCRIPT = 'https://script.google.com/macros/s/AKfycbxI3l5IZQESviIYkJCGHBR07jyQRZAG1aN2Os6W7-3f6OX6cgRwd_-WNZD2RPLe_ePGwA/exec';
+    const URL_APPS_SCRIPT = 'https://script.google.com/macros/s/AKfycbzD-leH-y2yAoT1U67IhLW7mIFUiMuGiCFywV2g1kqQa1c-9inipS_LToGO1UCGx2OPjA/exec';
     const linhas = document.getElementById('linhas');
     const dataLancamento = document.getElementById('dataLancamento');
     const status = document.getElementById('status');
@@ -263,28 +263,48 @@
       return celula.querySelector('input, select').value.trim();
     }
 
+    function obterDadosDaLinha(linha) {
+      const celulas = linha.cells;
+      return {
+        data: dataLancamento.value,
+        fornecedor: valorDaCelula(celulas[0]),
+        nfe: valorDaCelula(celulas[1]),
+        lote: valorDaCelula(celulas[2]),
+        validade: valorDaCelula(celulas[3]),
+        produtoMaster: valorDaCelula(celulas[4]),
+        quantidadeDaNota: valorDaCelula(celulas[5]),
+        unidadeDeMedida: valorDaCelula(celulas[6]),
+        temperatura: valorDaCelula(celulas[7]),
+        fabricacao: valorDaCelula(celulas[8]),
+        conferente: valorDaCelula(celulas[9]),
+        horaChegada: valorDaCelula(celulas[10]),
+        horaSaida: valorDaCelula(celulas[11])
+      };
+    }
+
+    function assinaturaDoLancamento(lancamento) {
+      return JSON.stringify([
+        lancamento.data, lancamento.fornecedor, lancamento.nfe, lancamento.lote,
+        lancamento.validade, lancamento.produtoMaster, lancamento.quantidadeDaNota,
+        lancamento.unidadeDeMedida, lancamento.temperatura, lancamento.fabricacao,
+        lancamento.conferente, lancamento.horaChegada, lancamento.horaSaida
+      ]);
+    }
+
     function obterLancamentos() {
       return [...linhas.rows]
         .map(linha => {
-          const celulas = linha.cells;
-          return {
-            data: dataLancamento.value,
-            fornecedor: valorDaCelula(celulas[0]),
-            nfe: valorDaCelula(celulas[1]),
-            lote: valorDaCelula(celulas[2]),
-            validade: valorDaCelula(celulas[3]),
-            produtoMaster: valorDaCelula(celulas[4]),
-            quantidadeDaNota: valorDaCelula(celulas[5]),
-            unidadeDeMedida: valorDaCelula(celulas[6]),
-            temperatura: valorDaCelula(celulas[7]),
-            fabricacao: valorDaCelula(celulas[8]),
-            conferente: valorDaCelula(celulas[9]),
-            horaChegada: valorDaCelula(celulas[10]),
-            horaSaida: valorDaCelula(celulas[11])
-          };
+          const lancamento = obterDadosDaLinha(linha);
+          const possuiConteudo = Object.entries(lancamento)
+            .some(([campo, valor]) => campo !== 'data' && valor !== '');
+          if (!possuiConteudo) return null;
+
+          const linhaPlanilha = Number(linha.dataset.linhaPlanilha) || null;
+          const foiAlterado = !linhaPlanilha ||
+            assinaturaDoLancamento(lancamento) !== linha.dataset.assinatura;
+          return foiAlterado ? { ...lancamento, linhaPlanilha } : null;
         })
-        .filter(lancamento => Object.entries(lancamento)
-          .some(([campo, valor]) => campo !== 'data' && valor !== ''));
+        .filter(Boolean);
     }
 
     async function enviarParaAppsScript(payload) {
@@ -305,6 +325,8 @@
       [...linhas.rows].forEach((linha, indice) => {
         const campos = linha.querySelectorAll('input, select');
         campos.forEach(campo => { campo.value = ''; });
+        delete linha.dataset.linhaPlanilha;
+        delete linha.dataset.assinatura;
 
         const lancamento = lancamentos[indice];
         if (!lancamento) return;
@@ -318,6 +340,8 @@
         campos.forEach((campo, campoIndice) => {
           campo.value = valores[campoIndice] ?? '';
         });
+        linha.dataset.linhaPlanilha = lancamento.linhaPlanilha;
+        linha.dataset.assinatura = assinaturaDoLancamento(obterDadosDaLinha(linha));
       });
     }
 
@@ -367,7 +391,7 @@
       }
 
       if (!lancamentos.length) {
-        status.textContent = 'Preencha ao menos uma linha para salvar.';
+        status.textContent = 'Nenhuma alteração para salvar.';
         return;
       }
 
@@ -388,6 +412,7 @@
         status.textContent = 'Enviando lançamentos para a planilha...';
         await enviarParaAppsScript({ setor, lancamentos });
         status.textContent = `${lancamentos.length} lançamento(s) enviado(s). Confira a planilha em instantes.`;
+        window.setTimeout(buscarLancamentosPorData, 500);
       } catch (erro) {
         status.textContent = `Falha ao enviar: ${erro.message || erro}`;
       }
