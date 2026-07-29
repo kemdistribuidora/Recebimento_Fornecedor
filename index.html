@@ -208,8 +208,8 @@
     border: none;
     background: transparent;
     font-family: inherit;
-    font-size: 18px; /* Tamanho ajustado para ficar mais visível */
-    font-weight: bold; /* Todos os campos agora são negrito */
+    font-size: 18px;
+    font-weight: bold;
     color: var(--texto);
     text-align: center;
     padding: 6px 12px;
@@ -222,23 +222,20 @@
 
   .celula-input::placeholder { 
     color: #b7c0cd; 
-    font-weight: normal; /* O placeholder não precisa ser negrito */
+    font-weight: normal;
   }
 
-  /* Deixa os campos de hora com a cor azul, igual ao base */
   .celula-input.hora {
     color: var(--azul);
     font-size: 20px;
   }
 
-  /* Estilos ao focar no input */
   .celula-input:focus {
     outline: 3px solid var(--laranja);
     outline-offset: -3px;
     background: #fff7ec;
   }
 
-  /* Estilo zebrado e hover nas linhas */
   tbody tr:nth-child(even) td { background: #fafbfd; }
   tbody tr:hover td { background: #fff7ec; }
 
@@ -299,7 +296,6 @@
   </section>
 
   <script>
-    // URL da implantação do Apps Script que recebe os lançamentos do GitHub Pages.
     const URL_APPS_SCRIPT = 'https://script.google.com/macros/s/AKfycbxsVJUocF1X4WsYRFWWU--Zb7bRjDTjg8ld9ErtBiofmQnDz0DGhKieg6NgO_nqXjKZXA/exec';
     const linhas = document.getElementById('linhas');
     const dataLancamento = document.getElementById('dataLancamento');
@@ -341,15 +337,6 @@
     for (let numero = 1; numero <= 10; numero++) adicionarLinha();
 
     aplicarMascaras();
-
-    document.querySelectorAll('.setor-btn').forEach(aba => {
-      aba.addEventListener('click', () => {
-        document.querySelector('.setor-btn.ativo').classList.remove('ativo');
-        aba.classList.add('ativo');
-        status.textContent = `Nada lançado ainda em ${aba.textContent} neste dia`;
-        status.className = 'status';
-      });
-    });
 
     function valorDaCelula(celula) {
       return celula.querySelector('input, select').value.trim();
@@ -400,19 +387,20 @@
     }
 
     async function enviarParaAppsScript(payload) {
-      const corpo = new URLSearchParams({ payload: JSON.stringify(payload) });
+      const corpo = new URLSearchParams();
+      corpo.append('payload', JSON.stringify(payload));
+      
       await fetch(URL_APPS_SCRIPT, {
         method: 'POST',
         mode: 'no-cors',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
-        body: corpo.toString()
+        body: corpo
       });
     }
 
     function preencherLancamentos(lancamentos) {
       while (linhas.rows.length < Math.max(10, lancamentos.length)) adicionarLinha();
 
-      [...linhas.rows].forEach((linha, indice) => {
+       [...linhas.rows].forEach((linha, indice) => {
         const campos = linha.querySelectorAll('input, select');
         campos.forEach(campo => { campo.value = ''; });
         delete linha.dataset.linhaPlanilha;
@@ -477,7 +465,7 @@
 
     document.getElementById('salvar').addEventListener('click', async () => {
       const lancamentos = obterLancamentos();
-      const setor = document.querySelector('.setor-btn.ativo')?.textContent || 'Recebimento';
+      const setor = 'Recebimento';
 
       if (!dataLancamento.value) {
         status.textContent = 'Informe a data do lançamento.';
@@ -512,7 +500,7 @@
         await enviarParaAppsScript({ setor, lancamentos });
         status.textContent = `${lancamentos.length} lançamento(s) enviado(s). Confira a planilha em instantes.`;
         status.className = 'status ok';
-        window.setTimeout(buscarLancamentosPorData, 500);
+        window.setTimeout(buscarLancamentosPorData, 800);
       } catch (erro) {
         status.textContent = `Falha ao enviar: ${erro.message || erro}`;
         status.className = 'status erro';
