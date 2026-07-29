@@ -181,25 +181,24 @@
     letter-spacing: .6px;
     padding: 12px 8px;
     line-height: 1.15;
-    white-space: normal;
-    overflow-wrap: break-word;
+    white-space: nowrap; /* Impedindo terminantemente a quebra de linha */
     position: sticky;
     top: 0;
     z-index: 10;
   }
 
-  /* Larguras das colunas do Recebimento */
-  .col-forn { width: 190px; }
-  .col-nfe { width: 105px; }
+  /* Larguras das colunas otimizadas para evitar truncamento em linha única */
+  .col-forn { width: 200px; }
+  .col-nfe { width: 110px; }
   .col-lote { width: 120px; }
-  .col-validade { width: 110px; }
-  .col-produto { width: 245px; }
-  .col-quantidade { width: 135px; }
+  .col-validade { width: 130px; }
+  .col-produto { width: 260px; }
+  .col-quantidade { width: 150px; }
   .col-unidade { width: 135px; }
-  .col-temperatura { width: 110px; }
-  .col-fabricacao { width: 110px; }
-  .col-conferente { width: 175px; }
-  .col-hora { width: 110px; }
+  .col-temperatura { width: 135px; }
+  .col-fabricacao { width: 135px; }
+  .col-conferente { width: 185px; }
+  .col-hora { width: 130px; }
 
   /* ---------- Campos internos da tabela ---------- */
   .celula-input {
@@ -401,7 +400,7 @@
       while (linhas.rows.length < Math.max(10, lancamentos.length)) adicionarLinha();
 
        [...linhas.rows].forEach((linha, indice) => {
-        const campos = linha.querySelectorAll('input, select');
+        const campos = inline = linha.querySelectorAll('input, select');
         campos.forEach(campo => { campo.value = ''; });
         delete linha.dataset.linhaPlanilha;
         delete linha.dataset.assinatura;
@@ -483,7 +482,7 @@
       if (typeof google !== 'undefined' && google.script && google.script.run) {
         google.script.run
           .withSuccessHandler(mensagem => {
-            status.textContent = mensagem || `${lancamentos.length} lançamento(s) salvo(s) com sucesso.`;
+            status.textContent = message || `${lancamentos.length} lançamento(s) salvo(s) com sucesso.`;
             status.className = 'status ok';
           })
           .withFailureHandler(erro => {
