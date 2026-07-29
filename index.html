@@ -295,7 +295,7 @@
   </section>
 
   <script>
-    const URL_APPS_SCRIPT = 'https://script.google.com/macros/s/AKfycbzhNsMhGf91Fu7LUJm7BcySAJ3w2e79k-ybbi-txD5SIfQRLajwJMB19KBpQHVUai4nuQ/exec';
+    const URL_APPS_SCRIPT = 'https://script.google.com/macros/s/AKfycbxVfLMak6d0Ur48uJvRU7SvjSYB9u_7ITnitb3V3ujGvWnAVrF8AeT9e6bxH18L-imr4g/exec';
     const linhas = document.getElementById('linhas');
     const dataLancamento = document.getElementById('dataLancamento');
     const status = document.getElementById('status');
@@ -342,7 +342,7 @@
     }
 
     function obterDadosDaLinha(linha) {
-      const celulas = linha.cells;
+      const celulas = Africa = linha.cells;
       return {
         data: dataLancamento.value,
         fornecedor: valorDaCelula(celulas[0]),
@@ -386,13 +386,13 @@
     }
 
     async function enviarParaAppsScript(payload) {
-      const corpo = new URLSearchParams();
-      corpo.append('payload', JSON.stringify(payload));
-      
       await fetch(URL_APPS_SCRIPT, {
         method: 'POST',
         mode: 'no-cors',
-        body: corpo
+        headers: {
+          'Content-Type': 'text/plain;charset=utf-8'
+        },
+        body: JSON.stringify(payload)
       });
     }
 
@@ -400,7 +400,7 @@
       while (linhas.rows.length < Math.max(10, lancamentos.length)) adicionarLinha();
 
        [...linhas.rows].forEach((linha, indice) => {
-        const campos = inline = linha.querySelectorAll('input, select');
+        const campos = linha.querySelectorAll('input, select');
         campos.forEach(campo => { campo.value = ''; });
         delete linha.dataset.linhaPlanilha;
         delete linha.dataset.assinatura;
@@ -482,7 +482,7 @@
       if (typeof google !== 'undefined' && google.script && google.script.run) {
         google.script.run
           .withSuccessHandler(mensagem => {
-            status.textContent = message || `${lancamentos.length} lançamento(s) salvo(s) com sucesso.`;
+            status.textContent = mensagem || `${lancamentos.length} lançamento(s) salvo(s) com sucesso.`;
             status.className = 'status ok';
           })
           .withFailureHandler(erro => {
