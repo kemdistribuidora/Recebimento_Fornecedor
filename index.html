@@ -181,13 +181,13 @@
     letter-spacing: .6px;
     padding: 12px 8px;
     line-height: 1.15;
-    white-space: nowrap;
+    white-space: nowrap; /* Impedindo terminantemente a quebra de linha */
     position: sticky;
     top: 0;
     z-index: 10;
   }
 
-  /* Larguras das colunas */
+  /* Larguras das colunas otimizadas para evitar truncamento em linha única */
   .col-forn { width: 200px; }
   .col-nfe { width: 110px; }
   .col-lote { width: 120px; }
@@ -295,8 +295,7 @@
   </section>
 
   <script>
-    // IMPORTANTE: Certifique-se de validar se este é o link da sua implantação mais recente
-    const URL_APPS_SCRIPT = 'https://script.google.com/macros/s/AKfycbz3u9H73Rat4cYBHhfKiniIsYiS30wTnZX7X-lbq3ILtRRe4Sfl8oNICN_Nn_M5taSlhw/exec';
+    const URL_APPS_SCRIPT = 'https://script.google.com/macros/s/AKfycbwIpscYHFBWGqsVFqn_T0-OkJ-NqQaJJn8C_r1ZK0Kr1e8Q7hQRPUw9u5aprmreyYmOTg/exec';
     const linhas = document.getElementById('linhas');
     const dataLancamento = document.getElementById('dataLancamento');
     const status = document.getElementById('status');
@@ -401,8 +400,7 @@
       while (linhas.rows.length < Math.max(10, lancamentos.length)) adicionarLinha();
 
        [...linhas.rows].forEach((linha, indice) => {
-        // CORRIGIDO: Removido atribuição de variável global inválida 'inline ='
-        const campos = linha.querySelectorAll('input, select');
+        const campos = inline = linha.querySelectorAll('input, select');
         campos.forEach(campo => { campo.value = ''; });
         delete linha.dataset.linhaPlanilha;
         delete linha.dataset.assinatura;
@@ -484,8 +482,7 @@
       if (typeof google !== 'undefined' && google.script && google.script.run) {
         google.script.run
           .withSuccessHandler(mensagem => {
-            // CORRIGIDO: Alterado 'message' para 'mensagem' para evitar ReferenceError
-            status.textContent = mensagem || `${lancamentos.length} lançamento(s) salvo(s) com sucesso.`;
+            status.textContent = message || `${lancamentos.length} lançamento(s) salvo(s) com sucesso.`;
             status.className = 'status ok';
           })
           .withFailureHandler(erro => {
@@ -500,12 +497,9 @@
         status.textContent = 'Enviando lançamentos para a planilha...';
         status.className = 'status';
         await enviarParaAppsScript({ setor, lancamentos });
-        status.textContent = `${lancamentos.length} lançamento(s) enviado(s). Atualizando dados em instantes...`;
+        status.textContent = `${lancamentos.length} lançamento(s) enviado(s). Confira a planilha em instantes.`;
         status.className = 'status ok';
-        
-        // CORRIGIDO: Aumentado o tempo para 3.5 segundos para dar tempo ao Google de registrar tudo 
-        // e evitar que a tela limpe os dados salvos antes da hora.
-        window.setTimeout(buscarLancamentosPorData, 3500);
+        window.setTimeout(buscarLancamentosPorData, 800);
       } catch (erro) {
         status.textContent = `Falha ao enviar: ${erro.message || erro}`;
         status.className = 'status erro';
