@@ -1,215 +1,303 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Recebimento de Fornecedor</title>
   <link rel="icon" type="image/png" href="imagens/icone.png">
+  <link rel="apple-touch-icon" href="imagens/icone.png">
   <style>
-    :root {
-      --azul: #143f73;
-      --azul-escuro: #0e3563;
-      --azul-claro: #eaf1fa;
-      --verde: #218a4d;
-      --laranja: #f7941d;
-      --vermelho: #e83b32;
-      --borda: #c7d1df;
-      --texto: #173f71;
-      --fundo: #f3f6fa;
-    }
+  :root {
+    /* Cores da marca KEM - Importadas do Base */
+    --azul: #123a6b;
+    --azul-escuro: #0e2e56;
+    --azul-clarinho: #eaf1fb;
+    --laranja: #f7941d;
+    --vermelho: #e5341f;
+    --grad: linear-gradient(135deg, #f7a81b, #e5341f);
 
-    * { box-sizing: border-box; }
+    --fundo: #eef1f6;
+    --texto: #1f2733;
+    --texto-suave: #5b6675;
+    --borda: #c7cfdb;
+    --borda-forte: var(--azul);
+    --ok: #1f8a4c;
+    --ok-escuro: #176c3b;
+    --erro: #c5221f;
+    --aviso-bg: #fdecea;
+  }
 
-    body {
-      margin: 0;
-      min-width: 320px;
-      font-family: Arial, Helvetica, sans-serif;
-      color: #263746;
-      background: linear-gradient(180deg, #f8fafc 0, var(--fundo) 100%);
-    }
+  * { box-sizing: border-box; }
 
-    .pagina { padding: 8px 20px; }
+  html { background: var(--fundo); }
 
-    .cabecalho {
-      min-height: 88px;
-      display: flex;
-      align-items: center;
-      gap: 28px;
-      padding: 14px 18px;
-      border: 1px solid #d7dde6;
-      border-top: 4px solid var(--vermelho);
-      border-bottom: 3px solid var(--laranja);
-      background: #fff;
-      box-shadow: 0 2px 6px rgba(20, 63, 115, .08);
-    }
+  body {
+    margin: 0 auto;
+    max-width: min(1500px, 97vw);
+    padding: 16px;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 16px;
+    color: var(--texto);
+  }
 
-    .marca { display: flex; align-items: center; gap: 15px; min-width: 390px; }
-    .logo-kem { width: 110px; height: auto; display: block; }
-    .titulo h1 { margin: 0; color: var(--azul); font-size: 22px; }
-    .titulo p { margin: 1px 0 0; color: #596575; font-size: 13px; font-weight: 600; }
+  /* ---------- Barra do topo ---------- */
+  .topo {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    flex-wrap: wrap;
+    background: #fff;
+    border: 1px solid var(--borda);
+    border-top: 5px solid transparent;
+    border-image: var(--grad) 1;
+    border-radius: 12px;
+    padding: 14px 20px;
+    margin-bottom: 14px;
+    box-shadow: 0 2px 8px rgba(18, 58, 107, .08);
+    position: sticky;
+    top: 0;
+    z-index: 20;
+  }
 
-    .acoes { display: flex; align-items: center; gap: 17px; margin-left: auto; }
-    .campo-data { display: flex; align-items: center; gap: 8px; color: var(--azul); font-weight: 700; }
-    input, select { font: inherit; }
-    .campo-data input {
-      width: 173px;
-      padding: 10px 11px;
-      border: 2px solid var(--borda);
-      border-radius: 8px;
-      color: #202020;
-      font-size: 16px;
-      outline: none;
-    }
-    .campo-data input:focus, .celula input:focus, .celula select:focus { border-color: #5b93cf; box-shadow: 0 0 0 2px rgba(91,147,207,.12); }
-    .btn-salvar {
-      min-width: 205px;
-      padding: 13px 20px;
-      border: 0;
-      border-radius: 8px;
-      color: #fff;
-      background: var(--verde);
-      box-shadow: inset 0 -2px 0 rgba(0,0,0,.14);
-      font-size: 16px;
-      font-weight: 700;
-      cursor: pointer;
-    }
-    .btn-salvar:hover { background: #176f3d; }
-    .btn-atualizar {
-      padding: 13px 18px;
-      border: 0;
-      border-radius: 8px;
-      color: #fff;
-      background: var(--azul);
-      box-shadow: inset 0 -2px 0 rgba(0,0,0,.14);
-      font-size: 16px;
-      font-weight: 700;
-      cursor: pointer;
-    }
-    .btn-atualizar:hover { background: var(--azul-escuro); }
-    .status { color: var(--verde); font-size: 14px; font-weight: 700; white-space: nowrap; }
+  .logo { height: 54px; width: auto; display: block; }
 
-    .abas { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 14px 0; }
-    .aba {
-      padding: 15px 10px;
-      border: 2px solid var(--borda);
-      border-radius: 10px;
-      background: #fff;
-      color: #596575;
-      font-size: 18px;
-      font-weight: 700;
-      text-align: center;
-      box-shadow: 0 2px 3px rgba(20,63,115,.08);
-      cursor: pointer;
-    }
-    .aba.ativa { border-color: var(--azul); color: var(--azul); background: #eaf5ed; box-shadow: inset 0 -3px var(--laranja), 0 2px 3px rgba(20,63,115,.08); }
+  .titulo { margin-right: auto; line-height: 1.15; }
+  .titulo h1 {
+    margin: 0;
+    font-size: 22px;
+    font-weight: bold;
+    color: var(--azul);
+  }
+  .titulo .sub { font-size: 13px; color: var(--texto-suave); font-weight: bold; }
 
-    .grade { overflow: auto; max-height: calc(100vh - 194px); border: 1px solid var(--borda); border-radius: 10px; background: #fff; box-shadow: 0 1px 4px rgba(20,63,115,.08); }
-    table { width: 100%; min-width: 1820px; border-collapse: collapse; table-layout: fixed; }
-    thead th {
-      position: sticky;
-      top: 0;
-      z-index: 1;
-      padding: 12px 8px;
-      border-right: 1px solid #5b7697;
-      background: var(--azul);
-      color: #fff;
-      font-size: 13px;
-      line-height: 15px;
-      text-align: center;
-      text-transform: uppercase;
-    }
-    tbody td { height: 52px; padding: 5px; border: 1px solid #d8e0ea; background: #fff; }
-    tbody tr:nth-child(even) td { background: #f8fafc; }
-    .celula input, .celula select {
-      width: 100%;
-      height: 35px;
-      padding: 6px 8px;
-      border: 1px solid transparent;
-      border-radius: 5px;
-      background: transparent;
-      color: #303d4b;
-      outline: none;
-    }
-    .celula input::placeholder { color: #9caaba; }
-    .celula input[type="time"] { text-align: center; color: #52667c; }
-    .celula input[type="number"] { text-align: right; }
-    .celula select { cursor: pointer; }
+  .acoes {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
 
-    .col-forn { width: 190px; }
-    .col-nfe { width: 105px; } .col-lote { width: 120px; } .col-validade { width: 110px; }
-    .col-produto { width: 245px; } .col-quantidade { width: 135px; } .col-unidade { width: 135px; }
-    .col-temperatura { width: 110px; } .col-fabricacao { width: 110px; } .col-conferente { width: 175px; }
-    .col-hora { width: 110px; }
+  .campo-data { display: flex; align-items: center; gap: 8px; }
+  .campo-data label { font-weight: bold; color: var(--azul); }
+  .campo-data input {
+    font-size: 18px;
+    padding: 10px;
+    border: 2px solid var(--borda);
+    border-radius: 8px;
+    font-family: inherit;
+  }
+  .campo-data input:focus { outline: none; border-color: var(--azul); }
 
-    @media (max-width: 1050px) {
-      .cabecalho { flex-wrap: wrap; gap: 12px; }
-      .marca { min-width: 0; }
-      .acoes { width: 100%; margin-left: 0; flex-wrap: wrap; }
-      .status { white-space: normal; }
-    }
-    @media (max-width: 620px) {
-      .pagina { padding: 6px; }
-      .marca { gap: 7px; }
-      .logo-kem { width: 85px; }
-      .titulo h1 { font-size: 17px; }
-      .acoes { gap: 8px; }
-      .campo-data input { width: 155px; }
-      .btn-salvar { min-width: 0; }
-      .abas { grid-template-columns: repeat(2, 1fr); gap: 6px; }
-      .aba { padding: 11px 6px; font-size: 15px; }
-    }
+  button {
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: bold;
+    padding: 13px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+
+  .btn-salvar { background: var(--ok); color: #fff; box-shadow: 0 2px 0 var(--ok-escuro); }
+  .btn-salvar:hover { background: var(--ok-escuro); }
+  .btn-salvar:active { transform: translateY(1px); box-shadow: none; }
+  .btn-salvar:disabled { background: #a9b2c0; box-shadow: none; cursor: default; }
+
+  .btn-atualizar { background: var(--azul); color: #fff; box-shadow: 0 2px 0 var(--azul-escuro); }
+  .btn-atualizar:hover { background: var(--azul-escuro); }
+  .btn-atualizar:active { transform: translateY(1px); box-shadow: none; }
+
+  .status {
+    font-weight: bold;
+    color: var(--ok);
+    font-size: 15px;
+  }
+  .status.erro { color: var(--erro); }
+  .status.pendente { color: var(--vermelho); }
+
+  /* ---------- Barra de setores (Abas) ---------- */
+  .setores {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+  }
+
+  .setor-btn {
+    flex: 1 1 0;
+    min-width: 150px;
+    padding: 16px 18px;
+    font-size: 19px;
+    font-weight: bold;
+    background: #fff;
+    color: var(--texto-suave);
+    border: 2px solid var(--borda);
+    border-radius: 10px;
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(18, 58, 107, .06);
+    transition: transform .05s, border-color .1s;
+  }
+  .setor-btn:hover { border-color: var(--azul); color: var(--azul); }
+  .setor-btn:active { transform: translateY(1px); }
+  .setor-btn.ativo {
+    color: var(--azul);
+    border-color: var(--azul);
+    box-shadow: inset 0 -6px 0 var(--laranja), 0 1px 3px rgba(18, 58, 107, .1);
+    background: #fff;
+  }
+
+  /* ---------- Grid (Moldura) ---------- */
+  .moldura {
+    background: #fff;
+    border: 1px solid var(--borda);
+    border-radius: 12px;
+    overflow-x: auto; 
+    overflow-y: auto;
+    max-height: calc(100vh - 200px);
+    box-shadow: 0 2px 8px rgba(18, 58, 107, .08);
+  }
+
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 1820px;
+    table-layout: fixed;
+    background: #fff;
+  }
+
+  th, td {
+    border: 1px solid #dfe4ec;
+    padding: 0;
+    text-align: center;
+    height: 52px;
+  }
+
+  thead th {
+    background: var(--azul);
+    color: #fff;
+    font-size: 15px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: .6px;
+    padding: 12px 8px;
+    line-height: 1.15;
+    white-space: normal;
+    overflow-wrap: break-word;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  /* Larguras das colunas do Recebimento */
+  .col-forn { width: 190px; }
+  .col-nfe { width: 105px; }
+  .col-lote { width: 120px; }
+  .col-validade { width: 110px; }
+  .col-produto { width: 245px; }
+  .col-quantidade { width: 135px; }
+  .col-unidade { width: 135px; }
+  .col-temperatura { width: 110px; }
+  .col-fabricacao { width: 110px; }
+  .col-conferente { width: 175px; }
+  .col-hora { width: 110px; }
+
+  /* ---------- Campos internos da tabela ---------- */
+  .celula-input {
+    width: 100%;
+    height: 100%;
+    border: none;
+    background: transparent;
+    font-family: inherit;
+    font-size: 18px; /* Tamanho ajustado para ficar mais visível */
+    font-weight: bold; /* Todos os campos agora são negrito */
+    color: var(--texto);
+    text-align: center;
+    padding: 6px 12px;
+    outline: none;
+  }
+
+  select.celula-input {
+    cursor: pointer;
+  }
+
+  .celula-input::placeholder { 
+    color: #b7c0cd; 
+    font-weight: normal; /* O placeholder não precisa ser negrito */
+  }
+
+  /* Deixa os campos de hora com a cor azul, igual ao base */
+  .celula-input.hora {
+    color: var(--azul);
+    font-size: 20px;
+  }
+
+  /* Estilos ao focar no input */
+  .celula-input:focus {
+    outline: 3px solid var(--laranja);
+    outline-offset: -3px;
+    background: #fff7ec;
+  }
+
+  /* Estilo zebrado e hover nas linhas */
+  tbody tr:nth-child(even) td { background: #fafbfd; }
+  tbody tr:hover td { background: #fff7ec; }
+
+  @media (max-width: 1050px) {
+    .topo { flex-wrap: wrap; gap: 12px; }
+    .acoes { width: 100%; flex-wrap: wrap; }
+    .status { white-space: normal; }
+  }
+
+  @media (max-width: 700px) {
+    .titulo h1 { font-size: 18px; }
+    .logo { height: 42px; }
+    .campo-data input { width: 155px; font-size: 16px; }
+    .btn-salvar, .btn-atualizar { width: 100%; }
+    .setores { flex-direction: column; }
+  }
   </style>
 </head>
 <body>
-  <main class="pagina">
-    <header class="cabecalho">
-      <div class="marca">
-        <img class="logo-kem" src="imagens/Distribuidora_KEM.png" alt="Kem Distribuidora de Alimentos">
-        <div class="titulo">
-          <h1>Recebimento de Fornecedor</h1>
-          <p>Controle de recebimento</p>
-        </div>
-      </div>
-      <div class="acoes">
-        <label class="campo-data" for="dataLancamento">Data:
-          <input id="dataLancamento" type="date">
-        </label>
-        <button class="btn-salvar" id="salvar" type="button">Salvar na planilha</button>
-        <button class="btn-atualizar" id="atualizar" type="button">Atualizar</button>
-        <span class="status" id="status">Nada lançado ainda neste setor/dia</span>
-      </div>
-    </header>
 
-    <br>
-<!--     <nav class="abas" aria-label="Setores de recebimento">
-      <button class="aba ativa" type="button">Secos 1</button>
-      <button class="aba" type="button">Secos 2</button>
-      <button class="aba" type="button">Resfriados</button>
-      <button class="aba" type="button">Congelados</button>
-    </nav> -->
+  <header class="topo">
+    <img class="logo" src="imagens/Distribuidora_KEM.png" alt="Kem Distribuidora de Alimentos">
+    <div class="titulo">
+      <h1>Recebimento de Fornecedor</h1>
+      <div class="sub">Controle de recebimento</div>
+    </div>
+    <div class="acoes">
+      <div class="campo-data">
+        <label for="dataLancamento">Data:</label>
+        <input id="dataLancamento" type="date">
+      </div>
+      <button class="btn-salvar" id="salvar" type="button">Salvar na planilha</button>
+      <button class="btn-atualizar" id="atualizar" type="button">Atualizar</button>
+    </div>
+    <div class="status" id="status">Nada lançado ainda neste setor/dia</div>
+  </header>
 
-    <section class="grade" aria-label="Lançamentos de recebimento">
-      <table>
-        <thead>
-          <tr>
-            <th class="col-forn">Fornecedor</th>
-            <th class="col-nfe">NFE</th>
-            <th class="col-lote">Lote</th>
-            <th class="col-validade">Validade</th>
-            <th class="col-produto">Produto Master</th>
-            <th class="col-quantidade">Quantidade da Nota</th>
-            <th class="col-unidade">Unidade de Medida</th>
-            <th class="col-temperatura">Temperatura</th>
-            <th class="col-fabricacao">Fabricação</th>
-            <th class="col-conferente">Conferente</th>
-            <th class="col-hora">H de Chega</th>
-            <th class="col-hora">H de Saída</th>
-          </tr>
-        </thead>
-        <tbody id="linhas"></tbody>
-      </table>
-    </section>
-  </main>
+  <section class="moldura" aria-label="Lançamentos de recebimento">
+    <table>
+      <thead>
+        <tr>
+          <th class="col-forn">Fornecedor</th>
+          <th class="col-nfe">NFE</th>
+          <th class="col-lote">Lote</th>
+          <th class="col-validade">Validade</th>
+          <th class="col-produto">Produto Master</th>
+          <th class="col-quantidade">Qtd. Nota</th>
+          <th class="col-unidade">Unidade</th>
+          <th class="col-temperatura">Temperatura</th>
+          <th class="col-fabricacao">Fabricação</th>
+          <th class="col-conferente">Conferente</th>
+          <th class="col-hora">H. Chegada</th>
+          <th class="col-hora">H. Saída</th>
+        </tr>
+      </thead>
+      <tbody id="linhas"></tbody>
+    </table>
+  </section>
+
   <script>
     // URL da implantação do Apps Script que recebe os lançamentos do GitHub Pages.
     const URL_APPS_SCRIPT = 'https://script.google.com/macros/s/AKfycbzD-leH-y2yAoT1U67IhLW7mIFUiMuGiCFywV2g1kqQa1c-9inipS_LToGO1UCGx2OPjA/exec';
@@ -220,8 +308,8 @@
     const hoje = new Date();
     dataLancamento.value = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-${String(hoje.getDate()).padStart(2, '0')}`;
 
-    const campo = (tipo, placeholder = '', extra = '') =>
-      `<td class="celula"><input type="${tipo}" placeholder="${placeholder}" ${extra}></td>`;
+    const campo = (tipo, placeholder = '', classe = '', extra = '') =>
+      `<td><input type="${tipo}" class="celula-input ${classe}" placeholder="${placeholder}" ${extra}></td>`;
 
     function adicionarLinha() {
       linhas.insertAdjacentHTML('beforeend', `
@@ -229,14 +317,14 @@
           ${campo('text', 'Fornecedor')}
           ${campo('text', 'NFE')}
           ${campo('text', 'Lote')}
-          ${campo('date')}
+          ${campo('text', 'dd/mm/aaaa', 'data')}
           ${campo('text', 'Produto master')}
-          ${campo('number', '0', 'min="0" step="any"')}
-          <td class="celula"><select aria-label="Unidade de medida"><option value=""></option><option>UN</option><option>KG</option><option>CX</option><option>PC</option><option>LT</option></select></td>
+          ${campo('number', '0', '', 'min="0" step="any"')}
+          <td><select class="celula-input" aria-label="Unidade de medida"><option value=""></option><option>UN</option><option>KG</option><option>CX</option><option>PC</option><option>LT</option></select></td>
           ${campo('text', 'Ex.: 5 °C')}
-          ${campo('date')}
-          <td class="celula">
-            <select aria-label="Conferente">
+          ${campo('text', 'dd/mm/aaaa', 'data')}
+          <td>
+            <select class="celula-input" aria-label="Conferente">
               <option value=""></option>
               <option>Alzoni</option>
               <option>João Paulo</option>
@@ -244,18 +332,22 @@
               <option>Alaor</option>
             </select>
           </td>
-          ${campo('time')}
-          ${campo('time')}
+          ${campo('text', '--:--', 'hora', 'maxlength="5" inputmode="numeric"')}
+          ${campo('text', '--:--', 'hora', 'maxlength="5" inputmode="numeric"')}
         </tr>`);
+        aplicarMascaras();
     }
 
     for (let numero = 1; numero <= 10; numero++) adicionarLinha();
 
-    document.querySelectorAll('.aba').forEach(aba => {
+    aplicarMascaras();
+
+    document.querySelectorAll('.setor-btn').forEach(aba => {
       aba.addEventListener('click', () => {
-        document.querySelector('.aba.ativa').classList.remove('ativa');
-        aba.classList.add('ativa');
+        document.querySelector('.setor-btn.ativo').classList.remove('ativo');
+        aba.classList.add('ativo');
         status.textContent = `Nada lançado ainda em ${aba.textContent} neste dia`;
+        status.className = 'status';
       });
     });
 
@@ -308,8 +400,6 @@
     }
 
     async function enviarParaAppsScript(payload) {
-      // 'no-cors' permite o POST do GitHub Pages para o Apps Script.
-      // A resposta é opaca no navegador, mas o Apps Script recebe o payload normalmente.
       const corpo = new URLSearchParams({ payload: JSON.stringify(payload) });
       await fetch(URL_APPS_SCRIPT, {
         method: 'POST',
@@ -348,6 +438,7 @@
     function buscarLancamentosPorData() {
       if (!dataLancamento.value) {
         status.textContent = 'Informe a data para atualizar.';
+        status.className = 'status pendente';
         dataLancamento.focus();
         return;
       }
@@ -355,12 +446,14 @@
       const nomeCallback = `retornoRecebimentos${Date.now()}`;
       const script = document.createElement('script');
       status.textContent = 'Buscando lançamentos na planilha...';
+      status.className = 'status';
 
       window[nomeCallback] = resposta => {
         script.remove();
         delete window[nomeCallback];
         if (!resposta.sucesso) {
           status.textContent = resposta.mensagem || 'Não foi possível buscar os lançamentos.';
+          status.className = 'status erro';
           return;
         }
 
@@ -369,12 +462,14 @@
         status.textContent = lancamentos.length
           ? `${lancamentos.length} lançamento(s) carregado(s) para esta data.`
           : 'Nenhum lançamento encontrado para esta data.';
+        status.className = 'status ok';
       };
 
       script.onerror = () => {
         script.remove();
         delete window[nomeCallback];
         status.textContent = 'Não foi possível consultar a planilha.';
+        status.className = 'status erro';
       };
       script.src = `${URL_APPS_SCRIPT}?acao=listarRecebimentos&data=${encodeURIComponent(dataLancamento.value)}&callback=${nomeCallback}`;
       document.head.appendChild(script);
@@ -382,27 +477,30 @@
 
     document.getElementById('salvar').addEventListener('click', async () => {
       const lancamentos = obterLancamentos();
-      const setor = document.querySelector('.aba.ativa')?.textContent || 'Recebimento';
+      const setor = document.querySelector('.setor-btn.ativo')?.textContent || 'Recebimento';
 
       if (!dataLancamento.value) {
         status.textContent = 'Informe a data do lançamento.';
+        status.className = 'status pendente';
         dataLancamento.focus();
         return;
       }
 
       if (!lancamentos.length) {
         status.textContent = 'Nenhuma alteração para salvar.';
+        status.className = 'status';
         return;
       }
 
-      // Cada objeto já contém a data definida no cabeçalho.
       if (typeof google !== 'undefined' && google.script && google.script.run) {
         google.script.run
           .withSuccessHandler(mensagem => {
             status.textContent = mensagem || `${lancamentos.length} lançamento(s) salvo(s) com sucesso.`;
+            status.className = 'status ok';
           })
           .withFailureHandler(erro => {
             status.textContent = `Não foi possível salvar: ${erro.message || erro}`;
+            status.className = 'status erro';
           })
           .salvarRecebimentos(setor, lancamentos);
         return;
@@ -410,15 +508,51 @@
 
       try {
         status.textContent = 'Enviando lançamentos para a planilha...';
+        status.className = 'status';
         await enviarParaAppsScript({ setor, lancamentos });
         status.textContent = `${lancamentos.length} lançamento(s) enviado(s). Confira a planilha em instantes.`;
+        status.className = 'status ok';
         window.setTimeout(buscarLancamentosPorData, 500);
       } catch (erro) {
         status.textContent = `Falha ao enviar: ${erro.message || erro}`;
+        status.className = 'status erro';
       }
     });
 
     document.getElementById('atualizar').addEventListener('click', buscarLancamentosPorData);
+    
+    function aplicarMascaras() {
+      document.querySelectorAll('.hora').forEach(inp => {
+        if (inp.dataset.mask) return;
+        inp.dataset.mask = '1';
+
+        inp.addEventListener('input', () => {
+          let d = inp.value.replace(/\D/g, '').slice(0,4);
+          inp.value = d.length >= 3 ? d.slice(0,2) + ':' + d.slice(2) : d;
+        });
+
+        inp.addEventListener('blur', () => {
+          let p = inp.value.split(':');
+          if (p.length !== 2) { inp.value = ''; return; }
+          let h = Number(p[0]);
+          let m = Number(p[1]);
+          if (isNaN(h) || isNaN(m) || h > 23 || m > 59) { inp.value = ''; return; }
+          inp.value = String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0');
+        });
+      });
+
+      document.querySelectorAll('.data').forEach(inp => {
+        if (inp.dataset.mask) return;
+        inp.dataset.mask = '1';
+
+        inp.addEventListener('input', () => {
+          let d = inp.value.replace(/\D/g,'').slice(0,8);
+          if (d.length > 4) inp.value = d.slice(0,2)+'/'+d.slice(2,4)+'/'+d.slice(4);
+          else if (d.length > 2) inp.value = d.slice(0,2)+'/'+d.slice(2);
+          else inp.value = d;
+        });
+      });
+    }
   </script>
 </body>
 </html>
