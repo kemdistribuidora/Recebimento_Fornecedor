@@ -484,6 +484,7 @@
           .withSuccessHandler(mensagem => {
             status.textContent = mensagem || `${lancamentos.length} lançamento(s) salvo(s) com sucesso.`;
             status.className = 'status ok';
+            buscarLancamentosPorData();
           })
           .withFailureHandler(erro => {
             status.textContent = `Não foi possível salvar: ${erro.message || erro}`;
