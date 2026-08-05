@@ -235,6 +235,12 @@
     background: #fff7ec;
   }
 
+  .celula-input.campo-erro {
+    outline: 2px solid var(--erro);
+    outline-offset: -2px;
+    background: var(--aviso-bg);
+  }
+
   tbody tr:nth-child(even) td { background: #fafbfd; }
   tbody tr:hover td { background: #fff7ec; }
 
@@ -325,6 +331,8 @@
               <option>João Paulo</option>
               <option>Francisco</option>
               <option>Alaor</option>
+              <option>Emilio</option>
+              <option>Laison</option>
             </select>
           </td>
           ${campo('text', '--:--', 'hora', 'maxlength="5" inputmode="numeric"')}
@@ -340,6 +348,44 @@
     function valorDaCelula(celula) {
       return celula.querySelector('input, select').value.trim();
     }
+
+    const NOMES_CAMPOS = [
+      'Fornecedor', 'NFE', 'Lote', 'Validade', 'Produto Master', 'Qtd. Nota',
+      'Unidade', 'Temperatura', 'Fabricação', 'Conferente', 'H. Chegada', 'H. Saída'
+    ];
+
+    function linhaEmUso(linha) {
+      return [...linha.cells].some(celula => valorDaCelula(celula) !== '');
+    }
+
+    function validarLinha(linha) {
+      const emUso = linhaEmUso(linha);
+      const faltando = [];
+      [...linha.cells].forEach((celula, indice) => {
+        const campoInput = celula.querySelector('input, select');
+        const vazio = valorDaCelula(celula) === '';
+        const comPendencia = emUso && vazio;
+        campoInput.classList.toggle('campo-erro', comPendencia);
+        if (comPendencia) faltando.push(NOMES_CAMPOS[indice]);
+      });
+      return faltando;
+    }
+
+    function validarTodasLinhas() {
+      return [...linhas.rows]
+        .map((linha, indice) => {
+          const faltando = validarLinha(linha);
+          return faltando.length ? `Linha ${indice + 1}: ${faltando.join(', ')}` : null;
+        })
+        .filter(Boolean);
+    }
+
+    ['input', 'change', 'focusout'].forEach(evento => {
+      linhas.addEventListener(evento, e => {
+        const linha = e.target.closest('tr');
+        if (linha) validarLinha(linha);
+      });
+    });
 
     function obterDadosDaLinha(linha) {
       const celulas = Africa = linha.cells;
@@ -420,6 +466,8 @@
         linha.dataset.linhaPlanilha = lancamento.linhaPlanilha;
         linha.dataset.assinatura = assinaturaDoLancamento(obterDadosDaLinha(linha));
       });
+
+      validarTodasLinhas();
     }
 
     function buscarLancamentosPorData() {
@@ -463,7 +511,6 @@
     }
 
     document.getElementById('salvar').addEventListener('click', async () => {
-      const lancamentos = obterLancamentos();
       const setor = 'Recebimento';
 
       if (!dataLancamento.value) {
@@ -472,6 +519,15 @@
         dataLancamento.focus();
         return;
       }
+
+      const pendencias = validarTodasLinhas();
+      if (pendencias.length) {
+        status.textContent = `Preencha os campos obrigatórios: ${pendencias.join(' | ')}`;
+        status.className = 'status pendente';
+        return;
+      }
+
+      const lancamentos = obterLancamentos();
 
       if (!lancamentos.length) {
         status.textContent = 'Nenhuma alteração para salvar.';
